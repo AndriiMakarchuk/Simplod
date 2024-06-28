@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>sharepoint_download</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Download&quot; Button</shortDescription>
+        <value>Download</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_edit</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Edit&quot; Button</shortDescription>
+        <value>Edit</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_openindesktop</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Open in Desktop&quot; Button</shortDescription>
+        <value>Edit in Desktop</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_openindesktop_icon</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>&quot;Open in Desktop&quot; Button Icon (https://www.lightningdesignsystem.com/icons/)</shortDescription>
+        <value>utility:desktop</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_openinweb</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Open in Web App&quot; Button</shortDescription>
+        <value>Edit in Web App</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_openinweb_icon</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>&quot;Open in Web App&quot; Button Icon (https://www.lightningdesignsystem.com/icons/)</shortDescription>
+        <value>utility:http</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_refresh</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Refresh&quot; Button</shortDescription>
+        <value>Refresh</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_uploadtosharepoint</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Upload To SharePoint&quot; Button</shortDescription>
+        <value>Upload document to SharePoint</value>
+    </labels>
+    <labels>
+        <fullName>sharepoint_uploadtosimploud</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SharePoint Editor &quot;Upload to Simploud&quot; Button</shortDescription>
+        <value>Save Minor Version</value>
+    </labels>
+</CustomLabels>
