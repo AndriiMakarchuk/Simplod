@@ -1,0 +1,172 @@
+.content {
+   margin: 1%;
+}
+
+.slds-modal__container {
+    width: 90% !important;
+    max-width: 90% !important;
+}
+
+.header-buttons {
+    justify-content: space-between;
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    align-items: center;
+}
+
+.header-button {
+    width: 155px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.header-button > .item {
+    width: 155px;
+}
+
+.iframe {
+    width: 100%;
+    height: 700px;
+    border: none;
+}
+
+.file {
+    width: 320px;
+    height: 200px;
+    border: 1px solid #ccc;
+    margin-left: 5px;
+}
+
+.file > .body {
+    width: 100%;
+    height: 80%;
+    background-size: cover;
+    background-position: center;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.file > .body:hover {
+    cursor: pointer;
+    background-color: #999;
+}
+
+.file > .body > .icon {
+    display: none;
+    width: 100%;
+    height: 100%;
+}
+
+.file > .body:hover > .icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.file > .body:hover > span {
+    display: none;
+}
+
+.file > .footer {
+    height: 20%;
+    background-color: #eee;
+    display: flex;
+    align-items: center;
+    padding-left: 5px;
+    margin-top: 0px;
+}
+
+.file > .footer > span {
+    margin-left: 5px;
+    color: black;
+    font-size: 12px;
+}
+
+.error {
+    color: red;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.btn {
+    display: flex;
+    gap: 0;
+    width: 175px;
+    max-height: 50px;
+    align-items: center;
+}
+
+.btn > .main {
+    display: flex;
+    align-items: center;
+    border-radius: 7px 0 0 7px;
+    padding: 2%;
+    background-color: #0176d3;
+    color: white;
+    transition: all 0.3s ease-in-out;
+    width: 75%;
+    max-height: 50px;
+}
+
+.btn > .main:hover {
+    cursor: pointer;
+    filter: brightness(0.9);
+}
+
+.btn > .main > .icon {
+    margin-right: 10px;
+}
+
+.btn > .dropdown {
+    padding: 2%;
+    border-left: 1px solid rgb(210, 210, 210);
+    border-radius: 0 7px 7px 0;
+    background-color: #0176d3;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    width: 15%;
+    max-height: 50px;
+}
+
+.btn > .dropdown:hover {
+    filter: brightness(0.9);
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: absolute;
+    top: 75%;
+    left: 60px;
+    box-shadow: #ccc 5px 5px 10px;
+    width: 155px;
+    cursor: pointer;
+}
+
+.options > .option {
+    --slds-c-icon-color-foreground: black;
+    color: black;
+    background-color: white;
+    padding: 5%;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: filter 0.3s ease-in-out;
+}
+
+.options > .option:hover {
+    filter: brightness(0.9);
+}
+
+.popup-bg {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    padding: 2%;
+    border-radius: 5px;
+}
