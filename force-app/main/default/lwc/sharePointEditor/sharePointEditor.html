@@ -1,0 +1,160 @@
+<template>
+    <template if:false={noDocument}>
+        <template if:true={displayIframe}>
+            <div class="slds-modal__container content">
+                <header class="slds-modal__header">
+                    <!-- Uncomment to display the red label -->
+                    <!-- <template if:false={trackChangesEnabled}>
+                        <span class="error">
+                            Please make sure to activate the review mode before editing the file
+                        </span>
+                    </template> -->
+                    <div class="header-buttons">
+                        <div class="slds-grid header-button">
+                            <div class="item">
+                                <!-- <lightning-button
+                                    title="Edit"
+                                    label={selectedEditor.name}
+                                    icon-name={selectedEditor.iconName}
+                                    variant="brand"
+                                    style="width: 190px; height: 30px;"
+                                    onclick={openEditor}>
+                                </lightning-button> -->
+
+                                <!-- Uncomment to use the dropdown button -->
+                                <div class="btn">
+                                    <div class="main" onclick={openEditor} data-id={selectedEditor.id}>
+                                        <template if:true={openInDesktop}>
+                                            <div class="icon">      
+                                                <lightning-icon
+                                                    icon-name={editors.desktop.iconName}
+                                                    size="xx-small"
+                                                    variant="inverse">
+                                                </lightning-icon>
+                                            </div>
+                                            <div class="text">
+                                                {editors.desktop.name}
+                                            </div>
+                                        </template>
+                                        <template if:false={openInDesktop}>
+                                            <div class="icon">      
+                                                <lightning-icon
+                                                    icon-name={editors.web.iconName}
+                                                    size="xx-small"
+                                                    variant="inverse">
+                                                </lightning-icon>
+                                            </div>
+                                            <div class="text">
+                                                {editors.web.name}
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="dropdown" onclick={toggleSwitchEditor}>
+                                        <div class="icon">
+                                            <lightning-icon
+                                                icon-name="utility:down"
+                                                size="xx-small"
+                                                variant="inverse">
+                                            </lightning-icon>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="options slds-hidden" data-id="alternative-editor-options">
+                                    <template if:true={openInDesktop}>
+                                        <div class="option" onclick={switchEditors} data-id={editors.web.id}>
+                                            <lightning-icon
+                                                icon-name={editors.web.iconName}
+                                                size="xx-small"
+                                                variant="inverse">
+                                            </lightning-icon>
+                                            <div class="text">
+                                                {editors.web.name}
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template if:false={openInDesktop}>
+                                        <div class="option" onclick={switchEditors} data-id={editors.desktop.id}>
+                                            <lightning-icon
+                                                icon-name={editors.desktop.iconName}
+                                                size="xx-small"
+                                                variant="inverse">
+                                            </lightning-icon>
+                                            <div class="text">
+                                                {editors.desktop.name}
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="slds-grid header-button">
+                            <div class="item">
+                                <lightning-button
+                                    title="Download"
+                                    label={uploadToSimploudLabelValue} 
+                                    icon-name="utility:offline_cached"
+                                    style="width: 100px; height: 30px;"
+                                    variant="base"
+                                    onclick={downloadToSF}>
+                                </lightning-button>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid header-button">
+                            <div class="item">
+                                <lightning-button
+                                    title="Refresh"
+                                    label={refreshLabelValue}
+                                    icon-name="utility:refresh"
+                                    style="width: 100px; height: 30px;"
+                                    variant="base"
+                                    onclick={refreshEditor}>
+                                </lightning-button>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid header-button">
+                            <div class="item">
+                                <lightning-button
+                                    title="Download"
+                                    label={downloadLabelValue}
+                                    icon-name="utility:download"
+                                    style="width: 100px; height: 30px;"
+                                    variant="base"
+                                    onclick={downloadToPC}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </div>
+
+                  </header>
+                <template if:true={showPreview}>
+                    <div class="slds-modal__content slds-p-around_medium slds-modal__content_headless" id="modal-content-id-1">
+                        <template if:true={embedUrl}>
+                                <iframe src={embedUrl} width="700" height="700" class="iframe"></iframe>
+                        </template>
+                        <template if:true={noFileUrl}>
+                            <p> No file URL associated with this record. Please check if file had been uploaded to OneDrive </p>
+                        </template>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+    </template>
+    <template if:true={noDocument}>
+        <template if:true={displayUploadToSharePoint}>
+            <div class="content">
+                <!-- <lightning-button
+                    title="Upload"
+                    label={uploadToSharePointLabelValue}
+                    icon-name="utility:upload"
+                    variant="brand"
+                    onclick={uploadToSharePoint}>
+                </lightning-button> -->
+            </div>
+        </template>
+    </template>
+</template>

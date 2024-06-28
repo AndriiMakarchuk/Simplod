@@ -1,4 +1,6 @@
 /**
+ * Interface for collaboration intagrations trigger helpers. To be called from IntegrationManager
+ * @author Danyil Mahalias  
  * Interface for Collaboration Tools
  * @author Danyil Mahalias
  * @since 22.09.2023
