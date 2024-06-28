@@ -23,6 +23,7 @@ trigger UserEmailTrigger on UserChangeEvent (after insert) {
 
     // if the user if File_Admin__c == True, all docs are affected
     User[] users = [SELECT Id, File_Admin__c FROM User WHERE Id IN :whereEmailChanged];
+
     Simploud__Controlled_Document__c[] docs = [SELECT Id FROM Simploud__Controlled_Document__c 
                                                 WHERE 
                                                     (Simploud__Is_Closed__c = False 
