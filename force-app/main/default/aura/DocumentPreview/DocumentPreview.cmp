@@ -1,0 +1,248 @@
+<aura:component controller="DocumentPreviewController" access="global" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName">
+    <aura:attribute name="imageSrc" type="String" />
+    <!-- 'showLoadingSpinner' attribute for show/hide the uploading image and msg in aura:if-->
+    <aura:attribute name="showLoadingSpinner" type="boolean" default="false" />
+    <!-- 'fileName' attribute for display the selected file name -->  
+    <aura:attribute name="fileName" type="String" default="No File Selected.." />
+    <aura:attribute name="showButton" type="boolean" default="false" />
+    <aura:attribute name="contentDocumentHref" type="String"/>
+    <aura:attribute name="showFileInput" type="boolean" default="false" />
+    <aura:attribute name="ContentDocumentId" type="String" />
+    <aura:attribute name="docName" type="String" /> 
+    <aura:attribute name="previousId" type="String" /> 
+    <aura:attribute name="fileExt" type="String" /> 
+    <aura:attribute name="fileSize" type="Decimal" />     
+    <aura:attribute name="fileType" type="List" default="['.doc', '.docx', '.xls','.xlsx', '.ppt','.pptx','.pdf','.odt','.ods','.odp','.numbers']" />   
+    <aura:attribute name="versionList" type="List" default="[]" />           
+    <aura:attribute name="docAction" type="String" default="Init"/>
+    <aura:attribute name="checkOut" type="boolean" default="false" />
+    <aura:attribute name="checkIn" type="boolean" default="false" />  
+    <aura:attribute name="requestComment" access="global" type="boolean" default="false" />
+    <aura:attribute name="addComment" type="boolean" default="false" />
+    <aura:attribute name="comment" type="String"  />
+    <aura:attribute name="cancelCheck" type="boolean" default="false" /> 
+    <aura:attribute name="myCheckOut" type="boolean" default="false" /> 
+    <aura:attribute name="isRevisionEmpty" type="boolean" default="false" /> 
+    <aura:attribute name="hideCheckButton" type="boolean" default="false" /> 
+    <aura:attribute name="docRendition" type="boolean" default="false" /> 
+    <aura:attribute name="checkedOutBy" type="String" /> 
+    <aura:attribute name="checkedOutOn" type="String" />
+    <aura:attribute name="showWordButton" access="global" type="Boolean" default="false"/>
+    <aura:attribute name="showImage" type="boolean" default="true" />
+    <aura:attribute name="showVersions" type="boolean" default="false" />
+    <aura:attribute name="lightGroup" type="String"  access="global"/> 
+    <aura:attribute name="isLight" type="Boolean" default="true"/> 
+    <aura:attribute name="showButtons" type="boolean" default="true" />
+    <aura:attribute name="isEffectiveStatus" type="boolean" default="false" />
+    <aura:attribute name="contentDocNotFound" type="boolean" default="true" />
+    <aura:attribute name="isReady" type="boolean" default="false" />
+    <aura:attribute name="viewerMode" type="String"  />
+    <aura:registerEvent name="eventData" type="c:genericDataEvent"/>
+    
+    
+    <!-- Lightning Input with file type and on file change call the 'handleFilesChange' controller --> 
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler event="force:refreshView" action="{!c.doInit}" />
+
+    <aura:if isTrue="{!v.isReady}">
+    <aura:if isTrue="{!!v.viewerMode}" >
+        <div class="slds-box  slds-box_xx-small slds-theme_default">
+            <!-- Header -->
+            <div class="preview-header slds-var-p-around_small">
+                <div class="slds-clearfix">
+                    <div class="slds-var-p-around_small">
+                        <lightning:icon iconName="standard:document" size="small" alternativeText="{!$Label.c.Document}"/>
+                        <span class="doc-name">
+                            {!v.docName}
+                        </span>
+                        <span class="help-icon-position">
+                            <c:academyHelpLink componentName="Check_In_Out" isEditor="{!!v.isLight}"/>
+                        </span>
+                    </div>
+                    
+                    <!-- Header (END) -->
+                    
+                    <div class="slds-var-p-around_small">
+                        <div class="slds-float_right">
+                        
+                            <aura:if isTrue="{!not(v.showFileInput)}">
+                                
+                                <aura:if isTrue="{!v.isRevisionEmpty}">
+                                    <lightning:buttonIcon iconName="utility:question" variant="bare" size="large" class="slds-var-p-bottom_xx-small slds-var-p-right_small" alternativeText="{!$Label.c.Missing_Document_Message}"  tooltip="{!$Label.c.Missing_Document_Message}" />
+                                </aura:if>
+                                <aura:if isTrue="{!not(v.contentDocNotFound)}">
+                                    <lightning:button variant="neutral" label="{!$Label.c.Versions}" onclick="{!c.getVersions}" />
+                                </aura:if>
+                                <aura:if isTrue="{!and(!v.isLight,!v.hideCheckButton)}">
+                                    <aura:if isTrue="{!v.checkOut}">
+                                        <aura:if isTrue="{!not(v.contentDocNotFound)}">
+                                            <lightning:button variant="neutral" label="{!$Label.c.Check_Out}" onclick="{!c.checkOut}" />
+                                        </aura:if>
+                                        <aura:set attribute="else">
+                                            <aura:if isTrue="{!v.showWordButton}">
+                                                <aura:if isTrue="{!not(v.contentDocNotFound)}">
+                                                    <lightning:button variant="neutral" label="{!$Label.c.Latest_Version}" onclick="{!c.wordVersion}" />
+                                                </aura:if>
+                                            </aura:if>
+                                        </aura:set>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.cancelCheck}">
+                                        <lightning:button variant="neutral" label="{!$Label.c.Cancel +' '+$Label.c.Check_Out}" onclick="{!c.cancelCheckOut}" />
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.checkIn}">
+                                        <lightning:button variant="neutral" label="{!$Label.c.Check_In}" onclick="{!c.uploadFile}" />
+                                    </aura:if>
+                                </aura:if>
+                            </aura:if>
+                        </div>
+                        <aura:if isTrue="{!v.showFileInput}">
+                            <lightning:fileUpload label="{!$Label.c.Check_In}" 
+                                                  multiple="true" 
+                                                  recordId="{!v.recordId}" 
+                                                  accept="{!v.fileType}"
+                                                  onuploadfinished="{!c.handleUploadFinished}" />
+                            <lightning:button variant="neutral" label="{!$Label.c.Cancel}" onclick="{!c.uploadFileCancel}" class="slds-var-m-right_small" />
+                            
+                        </aura:if> 
+                    </div>
+                    <aura:if isTrue="{!v.checkedOutBy != ''}">
+                        <aura:if isTrue="{!not(v.contentDocNotFound)}">
+                            <b>Checked out by 
+                                <aura:if isTrue="{!v.myCheckOut}">
+                                    you
+                                </aura:if>
+                                <aura:if isTrue="{!not(v.myCheckOut)}">
+                                    {!v.checkedOutBy}
+                                </aura:if>    
+                            </b>
+                        </aura:if>
+                    </aura:if>
+                    
+                    <aura:if isTrue="{!v.fileSize>6}">
+                        <div class="red">
+                            <lightning:icon iconName="utility:warning"  class="slds-var-m-right_x-small redIcon" size="small" tooltip="Converted PDF can be very large if the file contains a lot of pictures and this might fail the operation. If this happens, please try to compress the pictures and upload the file again."/>
+                            The file is bigger than 6Mb ({!v.fileSize}Mb) and the conversion to PDF might fail
+                        </div>
+                        <aura:set attribute="else">
+                            <aura:if isTrue="{!v.fileSize>4}">
+                                <div class="orange"> 
+                                    <lightning:buttonIcon iconName="utility:warning" variant="bare" class="slds-var-m-right_x-small orangeIcon" size="small" alternativeText="Converted PDF can be very large if the file contains a lot of pictures and this might fail the operation. If this happens, please try to compress the pictures and upload the file again." tooltip="Converted PDF can be very large if the file contains a lot of pictures and this might fail the operation. If this happens, please try to compress the pictures and upload the file again."/>
+                                    File size {!v.fileSize}Mb
+                                </div>
+                                <aura:set attribute="else">
+                                    <aura:if isTrue="{!v.fileSize}">
+                                        <div class="green">
+                                            <aura:if isTrue="{!v.fileSize GT 1}">
+                                                File size {!v.fileSize}Mb
+                                            </aura:if>
+                                        </div>
+                                    </aura:if>
+                                </aura:set>
+                            </aura:if>
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    <aura:if isTrue="{!or(v.viewerMode == 'status', v.viewerMode == 'pdf')}">
+        <lightning:fileUpload label="Please add a file" 
+        multiple="false" 
+        recordId="{!v.recordId}" 
+        accept="{!v.fileType}"
+        onuploadfinished="{!c.handleUploadFinished}" />
+   </aura:if>
+   </aura:if>
+      <!-- THIS IS THE MODAL FOR ADDING ITEMS-->
+    <aura:if isTrue="{!v.showVersions}" >
+        <div role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_medium slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!$Label.c.Minor_Versions}</h2>
+                </header>
+                <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-box slds-box_xx-small slds-theme_shade">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_3-of-12">
+                                {!$Label.c.Title}
+                            </div>
+                            <div class="slds-col slds-size_3-of-12">
+                                {!$Label.c.Created}
+                            </div>                   
+                            <div class="slds-col slds-size_2-of-12">
+                                {!$Label.c.File_Extension}
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                {!$Label.c.Version}
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                {!$Label.c.Size}
+                            </div>
+                        </div>
+                    </div>
+            
+                <aura:iteration items="{!v.versionList}" var="version_i" indexVar="index" >
+                    <div class="slds-box slds-box_xx-small">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_3-of-12">
+                               <lightning:formattedUrl value="{!'/sfc/servlet.shepherd/version/download/'+version_i.versionId}" label="{!version_i.name}" tooltip="Download version" target="_blank"/>
+                            </div>
+                            <div class="slds-col slds-size_3-of-12">
+                                {!version_i.modifier}                                
+                               (<lightning:formattedDateTime value="{!version_i.contentDate}"  year="2-digit" month="short" day="2-digit" hour="2-digit" minute="2-digit" timeZoneName="short" hour12="false" />)
+                               
+                            </div>                   
+                            <div class="slds-col slds-size_2-of-12">
+                                {!version_i.extension}
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                  {!version_i.versionNo}
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                  {!version_i.size} Kb
+                            </div>
+                        </div>
+                    </div>
+                </aura:iteration>
+                    
+                    
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="{!c.closeVersions}">{!$Label.c.Close}</button>
+                </footer>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    
+     <!-- THIS IS THE MODAL FOR CANCEL CHECKOUT-->
+    <aura:if isTrue="{!v.addComment}">
+        <div role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal  slds-modal__footer_directional  slds-fade-in-open" style="height: 720px;">
+            <div class="slds-modal__container" style="margin-top:5%">
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon onclick="{!c.closeComment}" size="medium" iconName="utility:close"  variant="bare-inverse" alternativeText="Close" tooltip="Close" class="slds-modal__close" />
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">
+                      {!$Label.c.Cancel_CheckOut}
+                    </h2>
+                </header>
+                <div class="modal-body slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                    
+                        <div class="slds-grid slds-grid_pull-padded-medium">
+                            <div class="slds-col slds-var-p-horizontal_medium">
+                                <lightning:textarea name="comment"  label="{!$Label.c.Comments}" value="{!v.comment}"  maxlength="300" required="true" />
+                            </div>
+                        </div>
+                </div>
+                <div class="slds-modal__footer">
+                    <lightning:button label="{!$Label.c.Cancel}" onclick="{!c.closeComment}"/>
+                    <aura:if isTrue="{!v.comment}"> 
+                        <lightning:button variant="brand" label="{!$Label.c.Cancel +' '+$Label.c.Check_Out}" onclick="{!c.submitComment}" />
+                    </aura:if>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop_open"></div>    
+    </aura:if>
+    
+    
+</aura:component>

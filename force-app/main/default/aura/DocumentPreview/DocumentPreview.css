@@ -1,0 +1,74 @@
+.THIS .preview-header {
+  width: 100%;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+  border: 2px solid #f0f0f0;
+  border-bottom: none;
+}
+.THIS .preview-second-header {
+  width: 100%;
+  border: 2px solid #f0f0f0;
+  border-bottom: none;
+}
+.THIS .preview-body {
+  width: 100%;
+  border-bottom-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border: 2px solid #f0f0f0;
+}
+.THIS .doc-name {
+  font-size: 110%;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.THIS .date {
+  color: #888;
+  margin-left: 10px;
+}
+
+.THIS .red {
+  color: red;
+  font-weight: bold;
+}
+
+.THIS .green {
+  color: green;
+  font-weight: bold;
+}
+
+.THIS .orange {
+  color: orange;
+  font-weight: bold;
+}
+
+.THIS .redIcon svg{
+    fill: red ;
+}
+
+.THIS .orangeIcon svg{
+    fill: orange ;
+}
+
+.THIS .img_not_available-box  {
+  height: 20rem;
+  background-color: rgba(0,0,0, 0.8);
+  color: #ddd;
+  width: 100%;
+  position: relative;
+}
+
+.THIS .img_not_available-text {
+  font-size: 120%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+.THIS .help-icon-position {
+  position: relative;
+  top: -12px; /* Adjust as necessary to move the icon up */
+  right: -2px; /* Aligns the icon to the right edge; adjust as necessary */
+}

@@ -1,0 +1,5 @@
+<design:component >
+    <design:attribute name = "showWordButton" label = "Show Latest Word Button" default = "false"/>
+    <design:attribute name = "requestComment" label = "Request Cancel Checkin Comment" default = "false"/>
+	<design:attribute name = "lightGroup" label = "Component View Only Group" description="Group that is not allowed to see the checking buttons" />
+</design:component>
