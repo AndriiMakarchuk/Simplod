@@ -5,13 +5,29 @@ public with sharing class SharePointTriggersHelper {
 
     public enum AccessType {
         EDIT,
+        REVIEW,
         READ,
         NOACCESS
     }
 
+    public static Map<AccessType, String> accessTypeToPermission = new Map<AccessType, String> {
+        AccessType.NOACCESS => 'none',
+        AccessType.READ => 'read',
+        AccessType.REVIEW => 'review',
+        AccessType.EDIT => 'write'
+    }; // accessType => permission
+
+    @future(callout=true)
+    public static void fffff() {
+        
+        //SharePointPermissionsApiHandler.addPermissionToUsers('a0Z0Q000004MWVHUA4', new List<User>{new User(Id='0050Q00000AOhnlQAD', Email='bohdanpyrih@bohdandom.com')}, 'view');
+        SharePointPermissionsApiHandler.deletePermissionsAPI(new Simploud__Controlled_Document__c(OneDrive_URL__c='https://everrest-my.sharepoint.com/personal/andriimakarchuk_bohdandom_com/_layouts/15/download.aspx?uniqueid=dcfba3d7-0f60-4764-847b-8b78798c3cf2&translate=false'), 'ae676ae2-8e23-4c92-9142-a70d095d47ac');
+        SharePointPermissionsApiHandler.deletePermissionsAPI(new Simploud__Controlled_Document__c(OneDrive_URL__c='https://everrest-my.sharepoint.com/personal/andriimakarchuk_bohdandom_com/_layouts/15/download.aspx?uniqueid=dcfba3d7-0f60-4764-847b-8b78798c3cf2&translate=false'), 'aTowIy5mfG1lbWJlcnNoaXB8Ym9oZGFucHlyaWhAYm9oZGFuZG9tLmNvbQ');
+        SharePointPermissionsApiHandler.viewPermissions(new List<String>{'a0Z0Q000004MWlIUAW'});
+    }
     @future(callout=true)
     public static void uploadFiles(String[] ids) {
-        if (system.isFuture() || system.isBatch()) return;
+        //if (system.isFuture() || system.isBatch()) return;
 
         Simploud__Controlled_Document__c[] docs = [SELECT Id, Simploud__Status__c 
                                                     FROM Simploud__Controlled_Document__c 
@@ -76,12 +92,6 @@ public with sharing class SharePointTriggersHelper {
 
         User[] fileAdmins = [SELECT Id, Email FROM User WHERE File_Admin__c = True];
 
-        Map<AccessType, String> accessTypeToPermission = new Map<AccessType, String> {
-            AccessType.NOACCESS => 'none',
-            AccessType.READ => 'read',
-            AccessType.EDIT => 'write'
-        }; // accessType => permission
-
         if (docs == null) throw new InvalidQueryException('Document not found');
         if (configs == null) throw new MisconfigurationException('Compliance configuration not found');
 
@@ -98,7 +108,7 @@ public with sharing class SharePointTriggersHelper {
             if (doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '')
             toDeletePermissions.add(doc.Id);
         }
-        SharePointPermissionsApiHandler.DeletePermissions(toDeletePermissions); // (1)
+        SharePointPermissionsApiHandler.deletePermissions(toDeletePermissions); // (1)
 
         for (Id docId : accessTypeForPartcipantsForDoc.keySet()) {
             for (AccessType accessType : accessTypeForPartcipantsForDoc.get(docId).keySet()) {
@@ -115,9 +125,10 @@ public with sharing class SharePointTriggersHelper {
                 User[] users = [SELECT Id, Email FROM User WHERE Id IN :userIds];
 
                 String accessLabel = accessTypeToPermission.get(accessType);
-
-                if (docId != null && users != null && users.size() > 0 && accessLabel != null)
-                SharePointPermissionsApiHandler.addPermissionToUsers(docId, users, accessLabel); // (2)
+                
+                if (docId != null && users != null && users.size() > 0 && accessLabel != null) {
+                    SharePointPermissionsApiHandler.addPermissionToUsers(docId, users, accessLabel); // (2)
+                }   
             }
         }
 
@@ -127,7 +138,7 @@ public with sharing class SharePointTriggersHelper {
             }
         }
 
-        SharePointPermissionsApiHandler.ViewPermissions(controlledDocumentsIds); // update links, permission ids, etc.
+        SharePointPermissionsApiHandler.viewPermissions(controlledDocumentsIds); // update links, permission ids, etc.
     }
 
     /**
@@ -165,6 +176,7 @@ public with sharing class SharePointTriggersHelper {
         // 2. add permissions for editors (list of user Ids from result.get(AccessType.EDIT))
         // 3. add permissions for readers (list of user Ids from result.get(AccessType.READ))
         Map<AccessType, Set<Id>> result = new Map<AccessType, Set<Id>> { // accessType => Simploud__Participant__c
+            AccessType.REVIEW => new Set<Id>(),
             AccessType.NOACCESS => new Set<Id>(),
             AccessType.READ => new Set<Id>(),
             AccessType.EDIT => new Set<Id>()
@@ -178,7 +190,7 @@ public with sharing class SharePointTriggersHelper {
 
         String buttonClickedValue;
 
-        if (document.Simploud__Button_Clicked__c != null && document.Simploud__Button_Clicked__c != '') {
+        if (String.isNotBlank(document.Simploud__Button_Clicked__c)) {
             try {
                 buttonClickedValue = document.Simploud__Button_Clicked__c.split(':')[2]; // e.g. 'Status' => 'Approve Review:Id1' -> 'Id1'
             }
@@ -418,7 +430,7 @@ public with sharing class SharePointTriggersHelper {
         }
 
         update parts;
-}
+    }
 
     public static void handleException(Exception e) {
         String errorMessage = 'Error occured in org: ' 

@@ -24,7 +24,8 @@ public class SharePointApiHandler {
       'xlsx' => 'application/vnd.ms-excel',
       'csv' => 'application/vnd.ms-excel',
       'ppt' => 'application/vnd.ms-powerpoint',
-      'pptx' => 'application/vnd.ms-powerpoint'
+      'pptx' => 'application/vnd.ms-powerpoint',
+      'pdf' => 'application/pdf'
     };
 
     return contentTypeMap.get(fileType);
@@ -282,7 +283,7 @@ public class SharePointApiHandler {
     for (ContentVersion cv : [
       SELECT Id, VersionData, Title, ContentDocumentId, FileExtension
       FROM ContentVersion
-      WHERE ContentDocumentId IN :contentDocuments.keySet() AND FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx') 
+      WHERE ContentDocumentId IN :contentDocuments.keySet() AND FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf') 
       ORDER BY CreatedDate DESC
     ]) {
       if (versions.values().contains(contentDocuments.get(cv.ContentDocumentId))) continue;

@@ -15,8 +15,8 @@ public with sharing class DocumentCollaborationManager {
         string collaborationToolName = settings.Collaboration_Tool__c;
 
         if (collaborationToolName == 'SharePoint') {
-            //this.collaborationTool = new SharePointCollaborationTool();
-            //this.collaborationToolName = 'SharePoint';
+            this.collaborationTool = new SharePointCollaborationTool();
+            this.collaborationToolName = 'SharePoint';
         }
         else if (collaborationToolName == 'Google') {
             this.collaborationTool = new GoogleDocsCollaborationTool();
@@ -33,6 +33,15 @@ public with sharing class DocumentCollaborationManager {
             System.debug('Error scheduling refresh job: ' + e.getMessage());
         }
     }
+
+    public Boolean isCollaborationFieldsGoogleOrSharepointSet(Simploud__Controlled_Document__c doc) {
+        return this.collaborationToolName == 'SharePoint' && String.isNotBlank(doc.OneDrive_URL__c) /*&& String.isNotBlank(doc.OneDrive_Permission__c)*/
+                || this.collaborationToolName == 'Google' && String.isNotBlank(doc.Google_Docs_Url__c);
+    }
+
+    // public Boolean isFieldChanged(Simploud__Controlled_Document__c doc, String fieldName, ) {
+    //     return 
+    // }
 
     public void deleteDocuments(String[] docsUrls) {
         this.collaborationTool.deleteDocuments(docsUrls);
@@ -59,10 +68,10 @@ public with sharing class DocumentCollaborationManager {
     }
 
     public void markFilesUploaded(Id[] docIds) {
-        Simploud__Controlled_Document__c[] docs = [SELECT Id, File_In_Cloud__c, Simploud__File_Exist__c FROM Simploud__Controlled_Document__c WHERE Id IN :docIds];
+        Simploud__Controlled_Document__c[] docs = [SELECT Id, Simploud__File_In_Cloud__c, Simploud__File_Exist__c FROM Simploud__Controlled_Document__c WHERE Id IN :docIds];
 
         for (Simploud__Controlled_Document__c doc : docs) {
-            doc.File_In_Cloud__c = doc.Simploud__File_Exist__c;
+            doc.Simploud__File_In_Cloud__c = doc.Simploud__File_Exist__c;
         }
 
         update docs;
