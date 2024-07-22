@@ -37,7 +37,7 @@
     <aura:attribute name="contentDocNotFound" type="boolean" default="true" />
     <aura:attribute name="isReady" type="boolean" default="false" />
     <aura:attribute name="viewerMode" type="String"  />
-    <aura:registerEvent name="eventData" type="c:genericDataEvent"/>
+    <!-- <aura:registerEvent name="eventData" type="c:genericDataEvent"/> -->
     
     
     <!-- Lightning Input with file type and on file change call the 'handleFilesChange' controller --> 
@@ -51,12 +51,12 @@
             <div class="preview-header slds-var-p-around_small">
                 <div class="slds-clearfix">
                     <div class="slds-var-p-around_small">
-                        <lightning:icon iconName="standard:document" size="small" alternativeText="{!$Label.c.Document}"/>
+                        <lightning:icon iconName="standard:document" size="small" alternativeText="{!$Label.Simploud.Document}"/>
                         <span class="doc-name">
                             {!v.docName}
                         </span>
                         <span class="help-icon-position">
-                            <c:academyHelpLink componentName="Check_In_Out" isEditor="{!!v.isLight}"/>
+                            <!-- <c:academyHelpLink componentName="Check_In_Out" isEditor="{!!v.isLight}"/> -->
                         </span>
                     </div>
                     
@@ -68,40 +68,40 @@
                             <aura:if isTrue="{!not(v.showFileInput)}">
                                 
                                 <aura:if isTrue="{!v.isRevisionEmpty}">
-                                    <lightning:buttonIcon iconName="utility:question" variant="bare" size="large" class="slds-var-p-bottom_xx-small slds-var-p-right_small" alternativeText="{!$Label.c.Missing_Document_Message}"  tooltip="{!$Label.c.Missing_Document_Message}" />
+                                    <lightning:buttonIcon iconName="utility:question" variant="bare" size="large" class="slds-var-p-bottom_xx-small slds-var-p-right_small" alternativeText="{!$Label.Simploud.Missing_Document_Message}"  tooltip="{!$Label.Simploud.Missing_Document_Message}" />
                                 </aura:if>
                                 <aura:if isTrue="{!not(v.contentDocNotFound)}">
-                                    <lightning:button variant="neutral" label="{!$Label.c.Versions}" onclick="{!c.getVersions}" />
+                                    <lightning:button variant="neutral" label="{!$Label.Simploud.Versions}" onclick="{!c.getVersions}" />
                                 </aura:if>
                                 <aura:if isTrue="{!and(!v.isLight,!v.hideCheckButton)}">
                                     <aura:if isTrue="{!v.checkOut}">
                                         <aura:if isTrue="{!not(v.contentDocNotFound)}">
-                                            <lightning:button variant="neutral" label="{!$Label.c.Check_Out}" onclick="{!c.checkOut}" />
+                                            <lightning:button variant="neutral" label="{!$Label.Simploud.Check_Out}" onclick="{!c.checkOut}" />
                                         </aura:if>
                                         <aura:set attribute="else">
                                             <aura:if isTrue="{!v.showWordButton}">
                                                 <aura:if isTrue="{!not(v.contentDocNotFound)}">
-                                                    <lightning:button variant="neutral" label="{!$Label.c.Latest_Version}" onclick="{!c.wordVersion}" />
+                                                    <lightning:button variant="neutral" label="{!$Label.Simploud.Latest_Version}" onclick="{!c.wordVersion}" />
                                                 </aura:if>
                                             </aura:if>
                                         </aura:set>
                                     </aura:if>
                                     <aura:if isTrue="{!v.cancelCheck}">
-                                        <lightning:button variant="neutral" label="{!$Label.c.Cancel +' '+$Label.c.Check_Out}" onclick="{!c.cancelCheckOut}" />
+                                        <lightning:button variant="neutral" label="{!$Label.Simploud.Cancel +' '+$Label.Simploud.Check_Out}" onclick="{!c.cancelCheckOut}" />
                                     </aura:if>
                                     <aura:if isTrue="{!v.checkIn}">
-                                        <lightning:button variant="neutral" label="{!$Label.c.Check_In}" onclick="{!c.uploadFile}" />
+                                        <lightning:button variant="neutral" label="{!$Label.Simploud.Check_In}" onclick="{!c.uploadFile}" />
                                     </aura:if>
                                 </aura:if>
                             </aura:if>
                         </div>
                         <aura:if isTrue="{!v.showFileInput}">
-                            <lightning:fileUpload label="{!$Label.c.Check_In}" 
+                            <lightning:fileUpload label="{!$Label.Simploud.Check_In}" 
                                                   multiple="true" 
                                                   recordId="{!v.recordId}" 
                                                   accept="{!v.fileType}"
                                                   onuploadfinished="{!c.handleUploadFinished}" />
-                            <lightning:button variant="neutral" label="{!$Label.c.Cancel}" onclick="{!c.uploadFileCancel}" class="slds-var-m-right_small" />
+                            <lightning:button variant="neutral" label="{!$Label.Simploud.Cancel}" onclick="{!c.uploadFileCancel}" class="slds-var-m-right_small" />
                             
                         </aura:if> 
                     </div>
@@ -158,25 +158,25 @@
         <div role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_medium slds-fade-in-open">
             <div class="slds-modal__container">
                 <header class="slds-modal__header">
-                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!$Label.c.Minor_Versions}</h2>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!$Label.Simploud.Minor_Versions}</h2>
                 </header>
                 <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
                     <div class="slds-box slds-box_xx-small slds-theme_shade">
                         <div class="slds-grid slds-gutters">
                             <div class="slds-col slds-size_3-of-12">
-                                {!$Label.c.Title}
+                                {!$Label.Simploud.Title}
                             </div>
                             <div class="slds-col slds-size_3-of-12">
-                                {!$Label.c.Created}
+                                {!$Label.Simploud.Created}
                             </div>                   
                             <div class="slds-col slds-size_2-of-12">
-                                {!$Label.c.File_Extension}
+                                {!$Label.Simploud.File_Extension}
                             </div>
                             <div class="slds-col slds-size_2-of-12">
-                                {!$Label.c.Version}
+                                {!$Label.Simploud.Version}
                             </div>
                             <div class="slds-col slds-size_2-of-12">
-                                {!$Label.c.Size}
+                                {!$Label.Simploud.Size}
                             </div>
                         </div>
                     </div>
@@ -208,7 +208,7 @@
                     
                 </div>
                 <footer class="slds-modal__footer">
-                    <button class="slds-button slds-button_neutral" onclick="{!c.closeVersions}">{!$Label.c.Close}</button>
+                    <button class="slds-button slds-button_neutral" onclick="{!c.closeVersions}">{!$Label.Simploud.Close}</button>
                 </footer>
             </div>
         </div>
@@ -222,21 +222,21 @@
                 <header class="slds-modal__header">
                     <lightning:buttonIcon onclick="{!c.closeComment}" size="medium" iconName="utility:close"  variant="bare-inverse" alternativeText="Close" tooltip="Close" class="slds-modal__close" />
                     <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">
-                      {!$Label.c.Cancel_CheckOut}
+                      {!$Label.Simploud.Cancel_CheckOut}
                     </h2>
                 </header>
                 <div class="modal-body slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
                     
                         <div class="slds-grid slds-grid_pull-padded-medium">
                             <div class="slds-col slds-var-p-horizontal_medium">
-                                <lightning:textarea name="comment"  label="{!$Label.c.Comments}" value="{!v.comment}"  maxlength="300" required="true" />
+                                <lightning:textarea name="comment"  label="{!$Label.Simploud.Comments}" value="{!v.comment}"  maxlength="300" required="true" />
                             </div>
                         </div>
                 </div>
                 <div class="slds-modal__footer">
-                    <lightning:button label="{!$Label.c.Cancel}" onclick="{!c.closeComment}"/>
+                    <lightning:button label="{!$Label.Simploud.Cancel}" onclick="{!c.closeComment}"/>
                     <aura:if isTrue="{!v.comment}"> 
-                        <lightning:button variant="brand" label="{!$Label.c.Cancel +' '+$Label.c.Check_Out}" onclick="{!c.submitComment}" />
+                        <lightning:button variant="brand" label="{!$Label.Simploud.Cancel +' '+$Label.Simploud.Check_Out}" onclick="{!c.submitComment}" />
                     </aura:if>
                 </div>
             </div>
