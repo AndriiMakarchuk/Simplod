@@ -39,10 +39,6 @@ public with sharing class DocumentCollaborationManager {
                 || this.collaborationToolName == 'Google' && String.isNotBlank(doc.Google_Docs_Url__c);
     }
 
-    // public Boolean isFieldChanged(Simploud__Controlled_Document__c doc, String fieldName, ) {
-    //     return 
-    // }
-
     public void deleteDocuments(String[] docsUrls) {
         this.collaborationTool.deleteDocuments(docsUrls);
     }

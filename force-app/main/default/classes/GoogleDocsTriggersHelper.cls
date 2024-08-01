@@ -35,9 +35,9 @@ public with sharing class GoogleDocsTriggersHelper {
         Set<String> filteredIds = new Set<String>(docIds);
 
         for (Simploud__Controlled_Document__c doc : docs) {
-            //if (!isCollaborationEnabled('Simploud__Controlled_Document__c', doc.Simploud__Status__c)) {
-                //filteredIds.remove(String.valueOf(doc.Id));
-            //}
+            if (!isCollaborationEnabled('Simploud__Controlled_Document__c', doc.Simploud__Status__c)) {
+                filteredIds.remove(String.valueOf(doc.Id));
+            }
         }
 
         Id[] filteredIdsAsIds = new Id[]{};
