@@ -18,14 +18,6 @@ public with sharing class SharePointTriggersHelper {
     }; // accessType => permission
 
     @future(callout=true)
-    public static void fffff() {
-        
-        //SharePointPermissionsApiHandler.addPermissionToUsers('a0Z0Q000004MWVHUA4', new List<User>{new User(Id='0050Q00000AOhnlQAD', Email='bohdanpyrih@bohdandom.com')}, 'view');
-        SharePointPermissionsApiHandler.deletePermissionsAPI(new Simploud__Controlled_Document__c(OneDrive_URL__c='https://everrest-my.sharepoint.com/personal/andriimakarchuk_bohdandom_com/_layouts/15/download.aspx?uniqueid=dcfba3d7-0f60-4764-847b-8b78798c3cf2&translate=false'), 'ae676ae2-8e23-4c92-9142-a70d095d47ac');
-        SharePointPermissionsApiHandler.deletePermissionsAPI(new Simploud__Controlled_Document__c(OneDrive_URL__c='https://everrest-my.sharepoint.com/personal/andriimakarchuk_bohdandom_com/_layouts/15/download.aspx?uniqueid=dcfba3d7-0f60-4764-847b-8b78798c3cf2&translate=false'), 'aTowIy5mfG1lbWJlcnNoaXB8Ym9oZGFucHlyaWhAYm9oZGFuZG9tLmNvbQ');
-        SharePointPermissionsApiHandler.viewPermissions(new List<String>{'a0Z0Q000004MWlIUAW'});
-    }
-    @future(callout=true)
     public static void uploadFiles(String[] ids) {
         //if (system.isFuture() || system.isBatch()) return;
 

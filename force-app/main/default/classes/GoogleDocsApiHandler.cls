@@ -46,12 +46,11 @@ public with sharing class GoogleDocsApiHandler {
     public static void uploadFile(Id[] recordIds) {
         if (recordIds == null) throw new GoogleDocsApiException('One or more parameters are null');
         if (recordIds.size() == 0) return;
-
         Map<Id, Simploud__Controlled_Document__c> controlledDocuments = new Map<Id, Simploud__Controlled_Document__c>(
             [
-                SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks), Google_Docs_URL__c, OwnerId
+                SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks), Google_Docs_URL__c, OwnerId, Uploaded_File_Extension__c
                 FROM Simploud__Controlled_Document__c
-                WHERE Id IN :recordIds AND Use_Document_Collaboration_Tool__c = 'Yes'
+                WHERE Id IN :recordIds AND Simploud__Use_Document_Collaboration_Tool__c = 'Yes'
             ]
         );
 
@@ -105,12 +104,11 @@ public with sharing class GoogleDocsApiHandler {
 
             Boolean isNewExtensionOrPDF = attach.ContentVersions.size() == 2 && 
                     (attach.ContentVersions[0].FileExtension != attach.ContentVersions[1].FileExtension);
-            if (isNewExtensionOrPDF) {
+            if (isNewExtensionOrPDF && String.isNotBlank(record.Google_Docs_URL__c)) {
                 deleteFile(record.Google_Docs_URL__c.split('/')[5]);
             }
             // Update or create
-            if (!isNewExtensionOrPDF && record.Google_Docs_URL__c != null 
-                && record.Google_Docs_URL__c.length() != 0 
+            if (!isNewExtensionOrPDF && String.isNotBlank(record.Google_Docs_URL__c)
                 && (record.Google_Docs_URL__c.contains('https://docs.google.com/')
                 || record.Google_Docs_URL__c.contains('https://drive.google.com/'))) { // Update
                     string fileId = record.Google_Docs_URL__c.split('/')[5];
@@ -123,7 +121,6 @@ public with sharing class GoogleDocsApiHandler {
                     );
                     continue;
             } else { // Create
-                System.debug('sdasdasdasd');
                 Simploud__Controlled_Document__c cd;
                 try {
                     cd = uploadFile(
@@ -133,8 +130,6 @@ public with sharing class GoogleDocsApiHandler {
                         record
                     );
                 } catch (Exception e) {
-                    System.debug('dsadasdasd');
-                    System.debug(e.getMessage());
                     continue;
                 }
 
@@ -202,7 +197,7 @@ public with sharing class GoogleDocsApiHandler {
         Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
 
         record.Google_Docs_URL__c = extnToServiceUrl.get(extn) + (String)result.get('id');
-        //record.Simploud__File_In_Cloud__c = true;
+        record.Uploaded_File_Extension__c = extn;
 
         return record;
     }

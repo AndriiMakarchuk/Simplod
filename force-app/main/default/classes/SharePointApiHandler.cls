@@ -258,7 +258,7 @@ public class SharePointApiHandler {
   public static void uploadDocuments(List<Id> recordIds) {
     Map<Id, Simploud__Controlled_Document__c> controlledDocuments = new Map<Id, Simploud__Controlled_Document__c>(
       [
-        SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks)
+        SELECT Id, Uploaded_File_Extension__c, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks)
         FROM Simploud__Controlled_Document__c
         WHERE Id IN :recordIds
       ]
@@ -363,6 +363,7 @@ public class SharePointApiHandler {
 
     if (res.getStatusCode() == 201 || res.getStatusCode() == 200) {
       record.OneDrive_URL__c = saveLink(res.getBody()).toLowerCase();
+      record.Uploaded_File_Extension__c = extn;
       return record;
     }
 

@@ -52,7 +52,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
                     && doc.Simploud__Checked_Out__c == false
                     && doc.Simploud__File_Exist__c == true
                     && doc.Simploud__File_In_Cloud__c == false
-                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                    && doc.Simploud__Use_Document_Collaboration_Tool__c == 'Yes'
                     && !nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
                 ) {
                     toUpload.add(String.valueOf(doc.Id));
@@ -60,69 +60,50 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
             }
         }
 
-        if (Trigger.isInsert) {
-            // for (Simploud__Controlled_Document__c doc : trigger.new) {
-            //     if (doc.Use_Document_Collaboration_Tool__c == 'Yes'
-            //         && doc.Simploud__File_In_Cloud__c == false
-            //         && doc.Simploud__File_Exist__c == true) 
-            //     {
-            //         toUpload.add(String.valueOf(doc.Id));
-            //     }
-            // }
-        }
-
         if (Trigger.isUpdate) {
             for (Simploud__Controlled_Document__c doc : Trigger.new) {
-                for (String field : fieldsLeadsToUpdatePermissions) {
-                    if (doc.get(field) != Trigger.oldMap.get(doc.Id).get(field)
-                        && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                        && collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)) 
+                if (collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc) 
+                    && doc.Simploud__Use_Document_Collaboration_Tool__c == 'Yes') 
+                {
+                    for (String field : fieldsLeadsToUpdatePermissions) {
+                        if (doc.get(field) != Trigger.oldMap.get(doc.Id).get(field)) {
+                            toUpdateAccess.add(doc.Id);
+                            break;
+                        }
+                    }
+
+                    for (String field : fieldsLeadsToSaveMinorVersion) {
+                        if (doc.get(field) != Trigger.oldMap.get(doc.Id).get(field)) {
+                            toSaveMinorVersion.put(doc.Id, Trigger.oldMap.get(doc.Id).Simploud__Status__c);
+                            break;
+                        }
+                    }
+
+                    if (doc.Simploud__Status__c == trigger.oldMap.get(doc.Id).Simploud__Status__c 
+                        && doc.Simploud__Button_Clicked__c != trigger.oldMap.get(doc.Id).Simploud__Button_Clicked__c) {
+                            toUpdateViewonly.add(doc.Id);
+                    }
+
+                    if (doc.Simploud__Status__c != trigger.oldMap.get(doc.Id).Simploud__Status__c) {
+                        toClearViewonly.add(doc.Id);
+                    }
+
+
+                    if (nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
+                        && (doc.Simploud__Status__c != Trigger.oldMap.get(doc.Id).Simploud__Status__c)) 
                     {
-                        toUpdateAccess.add(doc.Id);
-                        break;
-                    }
-                }
-
-                for (String field : fieldsLeadsToSaveMinorVersion) {
-                    if (doc.get(field) != Trigger.oldMap.get(doc.Id).get(field)
-                        && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                        && collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)) 
-                    {
-                        toSaveMinorVersion.put(doc.Id, Trigger.oldMap.get(doc.Id).Simploud__Status__c);
-                        break;
-                    }
-                }
-
-                if (doc.Simploud__Status__c == trigger.oldMap.get(doc.Id).Simploud__Status__c 
-                    && doc.Simploud__Button_Clicked__c != trigger.oldMap.get(doc.Id).Simploud__Button_Clicked__c
-                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                    && collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)) 
-                {
-                    toUpdateViewonly.add(doc.Id);
-                }
-
-                if (doc.Simploud__Status__c != trigger.oldMap.get(doc.Id).Simploud__Status__c
-                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                    && collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)) 
-                {
-                    toClearViewonly.add(doc.Id);
-                }
-
-                if (nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
-                    && (doc.Simploud__Status__c != Trigger.oldMap.get(doc.Id).Simploud__Status__c)
-                    && collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)) 
-                {
-                    if (collabManager.collaborationToolName == 'SharePoint') {
-                        toDelete.add(doc.Id);
-                    } else {
-                        toDelete.add(doc.Google_Docs_URL__c) ;
-                    }
-                    
+                        if (collabManager.collaborationToolName == 'SharePoint') {
+                            toDelete.add(doc.Id);
+                        } else {
+                            toDelete.add(doc.Google_Docs_URL__c) ;
+                        }
+                        
                     if (toUpload.indexOf(String.valueOf(doc.Id)) > -1) toUpload.remove(toUpload.indexOf(String.valueOf(doc.Id)));
-                    toUpdateAccess.remove(doc.Id);
-                    toSaveMinorVersion.remove(doc.Id);
-                    if (toUpdateViewonly.indexOf(doc.Id) > -1) toUpdateViewonly.remove(toUpdateViewonly.indexOf(doc.Id));
-                    if (toClearViewonly.indexOf(doc.Id) > -1) toClearViewonly.remove(toClearViewonly.indexOf(doc.Id));
+                        toUpdateAccess.remove(doc.Id);
+                        toSaveMinorVersion.remove(doc.Id);
+                        if (toUpdateViewonly.indexOf(doc.Id) > -1) toUpdateViewonly.remove(toUpdateViewonly.indexOf(doc.Id));
+                        if (toClearViewonly.indexOf(doc.Id) > -1) toClearViewonly.remove(toClearViewonly.indexOf(doc.Id));
+                    }
                 }
             }
         }
@@ -130,7 +111,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
         if (Trigger.isDelete) {
             for (Simploud__Controlled_Document__c doc : Trigger.old) {
                 if (collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)
-                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                    && doc.Simploud__Use_Document_Collaboration_Tool__c == 'Yes'
                     ) 
                 {
                     if (collabManager.collaborationToolName == 'SharePoint') {

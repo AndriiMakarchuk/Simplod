@@ -11,11 +11,7 @@ public with sharing class GoogleDocsCollaborationTool implements ICollaborationT
     }
 
     public void uploadFiles(String[] docIds) {
-        try {
-            GoogleDocsTriggersHelper.uploadFiles(docIds);
-        } catch (Exception e) {
-            // there is nothing we should do here
-        }
+        GoogleDocsTriggersHelper.uploadFiles(docIds);
     }
 
     public void saveMinorVersion(Map<Id, String> docIdStatus) {

@@ -22,7 +22,7 @@ public with sharing class SharePointFileEditorController {
      */
     @AuraEnabled
     public static string getEmbedUrl(String controlledDocumentId){
-        Simploud__Controlled_Document__c controlledDocument = [SELECT Id, Name, OneDrive_URL__c, Simploud__Template_Used__c FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
+        Simploud__Controlled_Document__c controlledDocument = [SELECT Id, Name, OneDrive_URL__c, Simploud__Template_Used__c, Uploaded_File_Extension__c FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
 
         string oneDriveUrl = controlledDocument.OneDrive_URL__c;
 
@@ -32,7 +32,7 @@ public with sharing class SharePointFileEditorController {
         string filename = getFilename(controlledDocumentId);
 
         string embedUrl;
-        if (getFileMimeType(controlledDocumentId) == 'pdf') {
+        if (controlledDocument.Uploaded_File_Extension__c == 'pdf') {
             embedUrl = oneDriveUrl.replace('download.aspx', 'embed.aspx');
         } else {
             embedUrl = oneDriveUrl.replace('.com', '.com/:w:/r')
@@ -56,9 +56,9 @@ public with sharing class SharePointFileEditorController {
      */
     @AuraEnabled
     public static string getEditorUrl(String controlledDocumentId) {
-        Simploud__Controlled_Document__c controlledDocument = [SELECT Id, Name, OneDrive_URL__c, OwnerId, OneDrive_Owner_Shared_Link__c, OneDrive_Embed_URL__c FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
+        Simploud__Controlled_Document__c controlledDocument = [SELECT Id, Name, Uploaded_File_Extension__c, OneDrive_URL__c, OwnerId, OneDrive_Owner_Shared_Link__c, OneDrive_Embed_URL__c FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
         
-        if (getFileMimeType(controlledDocumentId) == 'pdf') {
+        if (controlledDocument.Uploaded_File_Extension__c == 'pdf') {
             return controlledDocument.OneDrive_Embed_URL__c;
         }
 
@@ -134,13 +134,10 @@ public with sharing class SharePointFileEditorController {
      */
     @AuraEnabled
     public static string getFileMimeType(String controlledDocumentId) {
-        Simploud__Controlled_Document__c controlledDocument = [SELECT Id,  (SELECT Id, ContentDocumentId FROM ContentDocumentLinks) FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
-        ContentDocumentLink contentDocumentLink = controlledDocument.ContentDocumentLinks[0];
-        ContentDocument contentDocument = [SELECT Id, FileExtension FROM ContentDocument WHERE Id = :contentDocumentLink.ContentDocumentId WITH SECURITY_ENFORCED];
-        
-        if (!EXT_TO_MIMETYPE.containsKey(contentDocument.FileExtension)) return 'unknown';
+        Simploud__Controlled_Document__c controlledDocument = [SELECT Id, Uploaded_File_Extension__c FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
+        if (!EXT_TO_MIMETYPE.containsKey(controlledDocument.Uploaded_File_Extension__c)) return 'unknown';
 
-        return EXT_TO_MIMETYPE.get(contentDocument.FileExtension);
+        return EXT_TO_MIMETYPE.get(controlledDocument.Uploaded_File_Extension__c);
     }
 
     /**
@@ -234,6 +231,7 @@ public with sharing class SharePointFileEditorController {
         Simploud__Controlled_Document__c controlledDocument = [SELECT Id,  (SELECT Id, ContentDocumentId FROM ContentDocumentLinks) FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
         ContentDocumentLink contentDocumentLink = controlledDocument.ContentDocumentLinks[0];
         ContentDocument contentDocument = [SELECT Id, Title, FileExtension FROM ContentDocument WHERE Id = :contentDocumentLink.ContentDocumentId WITH SECURITY_ENFORCED];
+        System.debug(contentDocument);
         return contentDocument.Title + '.' + contentDocument.FileExtension;
     }
 
