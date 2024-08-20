@@ -35,7 +35,7 @@ public with sharing class DocumentCollaborationManager {
     }
 
     public Boolean isCollaborationFieldsGoogleOrSharepointSet(Simploud__Controlled_Document__c doc) {
-        return this.collaborationToolName == 'SharePoint' && String.isNotBlank(doc.OneDrive_URL__c) /*&& String.isNotBlank(doc.OneDrive_Permission__c)*/
+        return this.collaborationToolName == 'SharePoint' && String.isNotBlank(doc.OneDrive_URL__c)
                 || this.collaborationToolName == 'Google' && String.isNotBlank(doc.Google_Docs_Url__c);
     }
 
