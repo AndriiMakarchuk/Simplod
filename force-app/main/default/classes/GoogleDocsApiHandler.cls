@@ -193,6 +193,7 @@ public with sharing class GoogleDocsApiHandler {
         Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
 
         record.Google_Docs_URL__c = extnToServiceUrl.get(extn) + (String)result.get('id');
+        record.File_In_Cloud__c = true;
         record.Uploaded_File_Extension__c = extn;
 
         return record;

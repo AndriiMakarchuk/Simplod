@@ -19,7 +19,7 @@ public with sharing class SharePointTriggersHelper {
 
     @future(callout=true)
     public static void uploadFiles(String[] ids) {
-        //if (system.isFuture() || system.isBatch()) return;
+        if (system.isFuture() || system.isBatch()) return;
 
         Simploud__Controlled_Document__c[] docs = [SELECT Id, Simploud__Status__c 
                                                     FROM Simploud__Controlled_Document__c 
@@ -100,7 +100,7 @@ public with sharing class SharePointTriggersHelper {
             if (doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '')
             toDeletePermissions.add(doc.Id);
         }
-        SharePointPermissionsApiHandler.deletePermissions(toDeletePermissions); // (1)
+        SharePointPermissionsApiHandler.DeletePermissions(toDeletePermissions); // (1)
 
         for (Id docId : accessTypeForPartcipantsForDoc.keySet()) {
             for (AccessType accessType : accessTypeForPartcipantsForDoc.get(docId).keySet()) {
@@ -118,9 +118,8 @@ public with sharing class SharePointTriggersHelper {
 
                 String accessLabel = accessTypeToPermission.get(accessType);
                 
-                if (docId != null && users != null && users.size() > 0 && accessLabel != null) {
-                    SharePointPermissionsApiHandler.addPermissionToUsers(docId, users, accessLabel); // (2)
-                }   
+                if (docId != null && users != null && users.size() > 0 && accessLabel != null)
+                SharePointPermissionsApiHandler.addPermissionToUsers(docId, users, accessLabel); // (2)
             }
         }
 
@@ -130,7 +129,7 @@ public with sharing class SharePointTriggersHelper {
             }
         }
 
-        SharePointPermissionsApiHandler.viewPermissions(controlledDocumentsIds); // update links, permission ids, etc.
+        SharePointPermissionsApiHandler.ViewPermissions(controlledDocumentsIds); // update links, permission ids, etc.
     }
 
     /**
