@@ -15,8 +15,8 @@ public with sharing class DocumentCollaborationManager {
         string collaborationToolName = settings.Collaboration_Tool__c;
 
         if (collaborationToolName == 'SharePoint') {
-            //this.collaborationTool = new SharePointCollaborationTool();
-            //this.collaborationToolName = 'SharePoint';
+            this.collaborationTool = new SharePointCollaborationTool();
+            this.collaborationToolName = 'SharePoint';
         }
         else if (collaborationToolName == 'Google') {
             this.collaborationTool = new GoogleDocsCollaborationTool();
