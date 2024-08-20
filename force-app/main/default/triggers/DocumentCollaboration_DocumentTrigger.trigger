@@ -60,7 +60,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
             for (Simploud__Controlled_Document__c doc : trigger.new) {
                 for (String field : fieldsLeadsToUpdatePermissions) {
                     if (doc.get(field) != trigger.oldMap.get(doc.Id).get(field)
-                        // && doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                        && doc.Use_Document_Collaboration_Tool__c == 'Yes'
                         && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != ''
                             && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
                             || (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
@@ -75,7 +75,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
             for (Simploud__Controlled_Document__c doc : trigger.new) {
                 for (String field : fieldsLeadsToSaveMinorVersion) {
                     if (doc.get(field) != trigger.oldMap.get(doc.Id).get(field)
-                        // && doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                        && doc.Use_Document_Collaboration_Tool__c == 'Yes'
                         && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != '' 
                              && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
                             ||  (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
@@ -85,7 +85,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
                 }
 
                 if (doc.Simploud__Status__c == trigger.oldMap.get(doc.Id).Simploud__Status__c && doc.Simploud__Button_Clicked__c != trigger.oldMap.get(doc.Id).Simploud__Button_Clicked__c
-                    // && doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
                     && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != ''
                             && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
                             || (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
@@ -93,7 +93,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
                 }
 
                 if (doc.Simploud__Status__c != trigger.oldMap.get(doc.Id).Simploud__Status__c
-                    // && doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
                     && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != ''
                             && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
                             || (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
@@ -139,7 +139,7 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
                 || 
                 (!(doc.Google_Docs_Url__c == null || doc.Google_Docs_Url__c == '') && collabManager.collaborationToolName == 'Google')
                 )
-                //&& doc.Use_Document_Collaboration_Tool__c == 'Yes'
+                && doc.Use_Document_Collaboration_Tool__c == 'Yes'
                 ) {
                     if( collabManager.collaborationToolName == 'SharePoint'){
                         toDelete.add(doc.Id);
