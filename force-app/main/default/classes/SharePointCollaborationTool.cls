@@ -14,6 +14,7 @@ public with sharing class SharePointCollaborationTool implements ICollaborationT
         if (system.isFuture() || system.isBatch()) {
             return;
         }
+
         SharePointTriggersHelper.uploadFiles(docIds);
     }
 
