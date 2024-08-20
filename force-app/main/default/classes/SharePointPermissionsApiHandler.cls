@@ -360,7 +360,6 @@ public class SharePointPermissionsApiHandler {
         null,
         null
       );
-      System.debug(res.getBody());
       if (res.getStatusCode() == 200) {
         List<PermissionUser> parsingList = new List<PermissionUser>();
 
