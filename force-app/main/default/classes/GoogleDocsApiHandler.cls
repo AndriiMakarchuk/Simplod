@@ -154,7 +154,7 @@ public with sharing class GoogleDocsApiHandler {
         if (versionData == null || title == null || extn == null || record == null) throw new GoogleDocsApiException('One or more parameters are null');
         if (title.length() == 0 || extn.length() == 0) throw new GoogleDocsApiException('One or more parameters are empty');
         if (title.contains('\n') || extn.contains('\n')) throw new GoogleDocsApiException('One or more parameters contain new line characters');
-        // if (isFileAlreadyExists(title + '.' + extn)) throw new GoogleDocsApiException('File already exists');
+        if (isFileAlreadyExists(title + '.' + extn)) throw new GoogleDocsApiException('File already exists');
 
         if ([SELECT Id FROM AsyncApexJob WHERE MethodName = 'uploadFiles' AND Status = 'Processing'].size() > 1) {
             throw new GoogleDocsApiException('Another upload is in progress');
