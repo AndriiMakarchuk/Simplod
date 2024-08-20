@@ -231,7 +231,6 @@ public with sharing class SharePointFileEditorController {
         Simploud__Controlled_Document__c controlledDocument = [SELECT Id,  (SELECT Id, ContentDocumentId FROM ContentDocumentLinks) FROM Simploud__Controlled_Document__c WHERE Id = :controlledDocumentId WITH SECURITY_ENFORCED];
         ContentDocumentLink contentDocumentLink = controlledDocument.ContentDocumentLinks[0];
         ContentDocument contentDocument = [SELECT Id, Title, FileExtension FROM ContentDocument WHERE Id = :contentDocumentLink.ContentDocumentId WITH SECURITY_ENFORCED];
-        System.debug(contentDocument);
         return contentDocument.Title + '.' + contentDocument.FileExtension;
     }
 

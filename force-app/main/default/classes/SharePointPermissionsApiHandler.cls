@@ -5,11 +5,11 @@ public class SharePointPermissionsApiHandler {
   }
 
   private class PermissionBodyWrapper {
-    public List<EmailWrapper> recipients { get; set; }
+    public EmailWrapper[] recipients { get; set; }
     public string message { get; set; }
     public Boolean requireSignIn { get; set; }
     public boolean sendInvitation { get; set; }
-    public List<String> roles { get; set; }
+    public String[] roles { get; set; }
     public String type = 'review';
     public Boolean sendNotification = true;
     public Boolean retainInheritedPermissions = false;
@@ -18,8 +18,8 @@ public class SharePointPermissionsApiHandler {
     PermissionBodyWrapper(
       Boolean requireSignIn,
       boolean sendInvitation,
-      List<String> roles,
-      List<EmailWrapper> recipients,
+      String[] roles,
+      EmailWrapper[] recipients,
       string message
     ) {
       this.requireSignIn = requireSignIn;
@@ -32,7 +32,7 @@ public class SharePointPermissionsApiHandler {
     PermissionBodyWrapper() {
     }
 
-    public void setRecipients(List<EmailWrapper> recipients) {
+    public void setRecipients(EmailWrapper[] recipients) {
       this.recipients = recipients;
     }
 
@@ -48,13 +48,9 @@ public class SharePointPermissionsApiHandler {
       this.sendInvitation = sendInvitation;
     }
 
-    public void setRoles(List<String> roles) {
+    public void setRoles(String[] roles) {
       this.roles = roles;
     }
-
-    // public void setType(String type) {
-    //   this.type = type;
-    // }
 
     public override String toString() {
       return JSON.serialize(this);
@@ -71,8 +67,8 @@ public class SharePointPermissionsApiHandler {
 
   private class SharePointValueWrapper {
     public string id { get; set; }
-    public List<String> roles { get; set; }
-    public List<SharePointGranted> grantedToIdentities { get; set; }
+    public string[] roles { get; set; }
+    public SharePointGranted[] grantedToIdentities { get; set; }
     public SharePointGranted grantedTo { get; set; }
     public SharePointLinkWrapper link { get; set; }
   }
@@ -82,7 +78,7 @@ public class SharePointPermissionsApiHandler {
   }
 
   private class SharePointAcessWrapper {
-    public List<SharePointValueWrapper> value { get; set; }
+    public SharePointValueWrapper[] value { get; set; }
   }
 
   private class SharePointGranted {
@@ -95,20 +91,20 @@ public class SharePointPermissionsApiHandler {
 
   private class PermissionUser {
     public string permissionId { get; set; }
-    public List<String> emails { get; set; }
+    public string[] emails { get; set; }
     public string link { get; set; }
   }
 
   /**
    * Makes a request to the SharePoint API to add permissions to a document for a list of users
    * @param recordId `string` - the id of the Controlled Document record
-   * @param users `List<User>` - list of users to add permissions to
+   * @param users `User[]` - list of users to add permissions to
    * @param permission `string` (read/write) - the permission to add to the users
    * @author Anastasiia Stetsenko
    */
   public static void addPermissionToUsers(
     Id recordId,
-    List<User> users,
+    User[] users,
     String permission
   ) {
     // if (system.isFuture() || system.isBatch()) {
@@ -159,7 +155,6 @@ public class SharePointPermissionsApiHandler {
     );
 
     if (res.getStatusCode() != 200) {
-      System.debug('dddd');
       throw new CannotAddPermissionException(res.getBody());
     }
   }
@@ -213,7 +208,7 @@ public class SharePointPermissionsApiHandler {
   public static String addPermissionToOwner(String documentUrl, Id documentId) {
     Simploud__Controlled_Document__c controlledDocument = getControlledDocumentsByIds(new List<Id>{documentId}).get(0);
 
-    List<Id> participantsIds = new List<Id>();
+    Id[] participantsIds = new List<Id>();
     for (Simploud__Document_Participant__c part : controlledDocument.Simploud__Document_Participants__r) {
       participantsIds.add(part.Simploud__Participant__c);
     }
@@ -336,15 +331,15 @@ public class SharePointPermissionsApiHandler {
    * - OneDrive_Permission__c (on Controlled Document)
    * - OneDrive_Shared_Link__c (on Document Participant)
    * - OneDrive_Owner_Shared_Link__c (on Controlled Document)
-   * @param recordIds `List<String>` - the ids of the Controlled Document records to update permissions for
+   * @param recordIds `string[]` - the ids of the Controlled Document records to update permissions for
    * @author Anastasiia Stetsenko
    */
-  public static void viewPermissions(List<String> recordIds) {
+  public static void viewPermissions(String[] recordIds) {
     Map<Id, List<PermissionUser>> parsingMap = new Map<Id, List<PermissionUser>>();
     List<Simploud__Controlled_Document__c> controlledDocuments = getControlledDocumentsByIds(recordIds);
     List<Id> ownerIds = new List<Id>{};
 
-    List<Simploud__Controlled_Document__c> toUpdate = new List<Simploud__Controlled_Document__c>();
+    Simploud__Controlled_Document__c[] toUpdate = new List<Simploud__Controlled_Document__c>();
     for (Simploud__Controlled_Document__c controlledDocument : controlledDocuments) {
       ownerIds.add(controlledDocument.OwnerId);
 
@@ -375,9 +370,7 @@ public class SharePointPermissionsApiHandler {
           res.getBody(),
           SharePointAcessWrapper.class
         );
-        System.debug(JSON.serialize(wrap));
         for (SharePointValueWrapper unit : wrap.value) {
-          System.debug(unit);
           if (!unit.roles.contains('owner') && unit.roles.size() != 0) {
             if (String.isNotBlank(controlledDocument.OneDrive_Permission__c))
               controlledDocument.OneDrive_Permission__c += '\n';
@@ -390,7 +383,7 @@ public class SharePointPermissionsApiHandler {
               ';';
 
             PermissionUser pm = new PermissionUser();
-            List<String> emails = new List<String>();
+            String[] emails = new List<String>();
             if (unit.grantedToIdentities != null) {
               for (SharePointGranted u : unit.grantedToIdentities) {
                 emails.add(u.user.email);
@@ -409,7 +402,7 @@ public class SharePointPermissionsApiHandler {
               parsingList.add(pm);
           }
         }
-        if (String.isBlank(controlledDocument.OneDrive_Permission__c))
+        if(String.isBlank(controlledDocument.OneDrive_Permission__c))
         controlledDocument.OneDrive_Permission__c = ';';
 
         parsingMap.put(controlledDocument.Id, parsingList);
@@ -421,7 +414,7 @@ public class SharePointPermissionsApiHandler {
 
     List<Simploud__Document_Participant__c> participants = getDocumentParticipantsByDocumentsIds(parsingMap.keySet());
 
-    List<Id> userIds = new List<Id>();
+    Id[] userIds = new List<Id>();
     for (Simploud__Document_Participant__c part : participants) {
       userIds.add(part.Simploud__Participant__c);
     }
@@ -519,10 +512,10 @@ public class SharePointPermissionsApiHandler {
 
   /**
    * Makes a request to the SharePoint API to delete permissions for a list of files
-   * @param recordIds `List<String>` - the ids of the Controlled Document records to delete permissions for
+   * @param recordIds `string[]` - the ids of the Controlled Document records to delete permissions for
    * @author Anastasiia Stetsenko
    */
-  public static void deletePermissions(List<String> recordIds) {
+  public static void deletePermissions(String[] recordIds) {
     List<Simploud__Controlled_Document__c> controlledDocuments = getControlledDocumentsByIds(recordIds);
     for (Simploud__Controlled_Document__c controlledDocument : controlledDocuments) {
       List<String> permissions = controlledDocument.OneDrive_Permission__c.split(';');
