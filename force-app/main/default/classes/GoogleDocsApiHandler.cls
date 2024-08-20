@@ -50,7 +50,7 @@ public with sharing class GoogleDocsApiHandler {
                 SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks), Google_Docs_URL__c, OwnerId
                 FROM Simploud__Controlled_Document__c
                 WHERE Id IN :recordIds 
-                // AND Use_Document_Collaboration_Tool__c = 'Yes'
+                AND Use_Document_Collaboration_Tool__c = 'Yes'
             ]
         );
 
