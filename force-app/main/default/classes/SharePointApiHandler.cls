@@ -24,7 +24,8 @@ public class SharePointApiHandler {
       'xlsx' => 'application/vnd.ms-excel',
       'csv' => 'application/vnd.ms-excel',
       'ppt' => 'application/vnd.ms-powerpoint',
-      'pptx' => 'application/vnd.ms-powerpoint'
+      'pptx' => 'application/vnd.ms-powerpoint',
+      'pdf' => 'application/pdf'
     };
 
     return contentTypeMap.get(fileType);
@@ -257,7 +258,7 @@ public class SharePointApiHandler {
   public static void uploadDocuments(List<Id> recordIds) {
     Map<Id, Simploud__Controlled_Document__c> controlledDocuments = new Map<Id, Simploud__Controlled_Document__c>(
       [
-        SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks)
+        SELECT Id, Uploaded_File_Extension__c, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks)
         FROM Simploud__Controlled_Document__c
         WHERE Id IN :recordIds
       ]
@@ -282,7 +283,7 @@ public class SharePointApiHandler {
     for (ContentVersion cv : [
       SELECT Id, VersionData, Title, ContentDocumentId, FileExtension
       FROM ContentVersion
-      WHERE ContentDocumentId IN :contentDocuments.keySet() AND FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx') 
+      WHERE ContentDocumentId IN :contentDocuments.keySet() AND FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf') 
       ORDER BY CreatedDate DESC
     ]) {
       if (versions.values().contains(contentDocuments.get(cv.ContentDocumentId))) continue;
@@ -362,6 +363,7 @@ public class SharePointApiHandler {
 
     if (res.getStatusCode() == 201 || res.getStatusCode() == 200) {
       record.OneDrive_URL__c = saveLink(res.getBody()).toLowerCase();
+      record.Uploaded_File_Extension__c = extn;
       return record;
     }
 

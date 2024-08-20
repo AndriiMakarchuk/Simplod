@@ -12,7 +12,8 @@ public with sharing class GoogleDocsApiHandler {
         'xls' => 'application/vnd.google-apps.spreadsheet',
         'xlsx' => 'application/vnd.google-apps.spreadsheet',
         'ppt' => 'application/vnd.google-apps.presentation',
-        'pptx' => 'application/vnd.google-apps.presentation'
+        'pptx' => 'application/vnd.google-apps.presentation',
+        'pdf' => 'application/pdf'
     };
 
     private static final Map<String, String> extnToServiceUrl = new Map<String, String> {
@@ -21,7 +22,8 @@ public with sharing class GoogleDocsApiHandler {
         'xls' => 'https://docs.google.com/spreadsheets/d/',
         'xlsx' => 'https://docs.google.com/spreadsheets/d/',
         'ppt' => 'https://docs.google.com/presentation/d/',
-        'pptx' => 'https://docs.google.com/presentation/d/'
+        'pptx' => 'https://docs.google.com/presentation/d/',
+        'pdf' => 'https://drive.google.com/file/d/'
     };
 
     private static final Map<String, String> extnToExportMimeType = new Map<String, String> {
@@ -47,7 +49,7 @@ public with sharing class GoogleDocsApiHandler {
 
         Map<Id, Simploud__Controlled_Document__c> controlledDocuments = new Map<Id, Simploud__Controlled_Document__c>(
             [
-                SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks), Google_Docs_URL__c, OwnerId
+                SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks), Google_Docs_URL__c, OwnerId, Uploaded_File_Extension__c
                 FROM Simploud__Controlled_Document__c
                 WHERE Id IN :recordIds 
                 AND Use_Document_Collaboration_Tool__c = 'Yes'
@@ -61,33 +63,34 @@ public with sharing class GoogleDocsApiHandler {
             contentDocumentIds.put(cd.ContentDocumentLinks[0].ContentDocumentId, cd);
         }
 
-        Map<Id, Simploud__Controlled_Document__c> contentDocuments = new Map<Id, Simploud__Controlled_Document__c>();
-        List<Id> IdFromSet = new List<Id>(contentDocumentIds.keySet());
+        Map<ContentDocument, Simploud__Controlled_Document__c> contentDocuments = new Map<ContentDocument, Simploud__Controlled_Document__c>();
 
-        for (ContentDocument cd : [SELECT Id, Title, FileExtension
+        for (ContentDocument cd : [SELECT Id, Title, FileExtension,
+                                    (SELECT Id, Title, ContentDocumentId, FileExtension
+                                    FROM ContentVersions
+                                    WHERE FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf') 
+                                    ORDER BY CreatedDate DESC LIMIT 2)
                                     FROM ContentDocument
-                                    WHERE Id IN :IdFromSet
+                                    WHERE Id IN :contentDocumentIds.keySet()
                                     ]) {
-            contentDocuments.put(cd.Id, contentDocumentIds.get(cd.Id));
+            contentDocuments.put(cd, contentDocumentIds.get(cd.Id));
         }
 
-        Map<ContentVersion, Simploud__Controlled_Document__c> versions = new Map<ContentVersion, Simploud__Controlled_Document__c>(); // ContentVersion -> Controlled Document
-        for (ContentVersion cv : [SELECT Id, VersionData, Title, ContentDocumentId, FileExtension
-                                    FROM ContentVersion
-                                    WHERE ContentDocumentId IN :contentDocuments.keySet() AND FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx') 
-                                    ORDER BY CreatedDate DESC
-                                    ]) {
-            if (versions.values().contains(contentDocuments.get(cv.ContentDocumentId))) continue;
-            versions.put(cv, contentDocuments.get(cv.ContentDocumentId));
-        }
+        Map<Id, ContentVersion> versionsBolbMap = new Map<Id, ContentVersion>(
+            [SELECT Id, VersionData
+                FROM ContentVersion
+                WHERE FileExtension IN ('docx', 'doc', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf') 
+                AND ContentDocumentId IN :contentDocumentIds.keySet()
+            ]
+        );
 
         List<Simploud__Controlled_Document__c> toUpdate = new List<Simploud__Controlled_Document__c>();
-        for (ContentVersion attach : versions.keySet()) {
-            Blob docBody = attach.VersionData;
+        for (ContentDocument attach : contentDocuments.keySet()) {
+            Blob docBody = versionsBolbMap.get(attach.ContentVersions[0].Id).VersionData;
 
             string title = attach.Title;
             string extn = attach.FileExtension;
-            Simploud__Controlled_Document__c record = versions.get(attach);
+            Simploud__Controlled_Document__c record = contentDocuments.get(attach);
 
             if (attach.Title.contains('.')) {
                 title = attach.Title.split('\\.')[0];
@@ -95,10 +98,15 @@ public with sharing class GoogleDocsApiHandler {
 
             title = generateFileName(record.Id);
 
+            Boolean isNewExtensionOrPDF = attach.ContentVersions.size() == 2 && 
+                    (attach.ContentVersions[0].FileExtension != attach.ContentVersions[1].FileExtension);
+            if (isNewExtensionOrPDF && String.isNotBlank(record.Google_Docs_URL__c)) {
+                deleteFile(record.Google_Docs_URL__c.split('/')[5]);
+            }
             // Update or create
-            if (record.Google_Docs_URL__c != null 
-                && record.Google_Docs_URL__c.length() != 0 
-                && record.Google_Docs_URL__c.contains('https://docs.google.com/')) { // Update
+            if (!isNewExtensionOrPDF && String.isNotBlank(record.Google_Docs_URL__c)
+                && (record.Google_Docs_URL__c.contains('https://docs.google.com/')
+                || record.Google_Docs_URL__c.contains('https://drive.google.com/'))) { // Update
                     string fileId = record.Google_Docs_URL__c.split('/')[5];
                     updateFile(
                         docBody,
@@ -108,8 +116,7 @@ public with sharing class GoogleDocsApiHandler {
                         extn
                     );
                     continue;
-            }
-            else { // Create
+            } else { // Create
                 Simploud__Controlled_Document__c cd;
                 try {
                     cd = uploadFile(
@@ -187,6 +194,7 @@ public with sharing class GoogleDocsApiHandler {
 
         record.Google_Docs_URL__c = extnToServiceUrl.get(extn) + (String)result.get('id');
         record.File_In_Cloud__c = true;
+        record.Uploaded_File_Extension__c = extn;
 
         return record;
     }
@@ -287,7 +295,7 @@ public with sharing class GoogleDocsApiHandler {
         if (docUrls.size() == 0) return;
 
         for (String url : docUrls) {
-            if (url != null && url.length() != 0 && url.contains('https://docs.google.com/')) {
+            if (url != null && url.length() != 0 && (url.contains('https://docs.google.com/') || url.contains('https://drive.google.com/'))) {
                 string fileId = url.split('/')[5];
                 deleteFile(fileId);
             }

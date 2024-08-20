@@ -235,7 +235,7 @@ public with sharing class GoogleDocsTriggersHelper {
             // if current configuration from the loop is related to the current status of the document
             // then add participants to the result
             if (config.Simploud__On_Status_Value__c == document.Simploud__Status__c) {
-                result.get(GoogleDocsPermissionApiHandler.PermissionType.COMMENT).addAll(participantsForCurrentStatus); 
+                result.get(GoogleDocsPermissionApiHandler.PermissionType.EDIT).addAll(participantsForCurrentStatus); 
             }
 
             // if current configuration from the loop is related to any other status of the document
@@ -246,9 +246,9 @@ public with sharing class GoogleDocsTriggersHelper {
         }
 
         // for those who clicked the button -- remove from edit and add to VIEW
-        for (Id editParticipantId : result.get(GoogleDocsPermissionApiHandler.PermissionType.COMMENT)) {
+        for (Id editParticipantId : result.get(GoogleDocsPermissionApiHandler.PermissionType.EDIT)) {
             if (editParticipantId == buttonClickedValue) {
-                result.get(GoogleDocsPermissionApiHandler.PermissionType.COMMENT).remove(editParticipantId);
+                result.get(GoogleDocsPermissionApiHandler.PermissionType.EDIT).remove(editParticipantId);
                 result.get(GoogleDocsPermissionApiHandler.PermissionType.VIEW).add(editParticipantId);
             }
         }
@@ -257,7 +257,7 @@ public with sharing class GoogleDocsTriggersHelper {
         for (Simploud__Document_Participant__c participant : document.Simploud__Document_Participants__r) {
             if (participant.Viewonly__c == true) {
                 result.get(GoogleDocsPermissionApiHandler.PermissionType.VIEW).add(participant.Simploud__Participant__c);
-                result.get(GoogleDocsPermissionApiHandler.PermissionType.COMMENT).remove(participant.Simploud__Participant__c);
+                result.get(GoogleDocsPermissionApiHandler.PermissionType.EDIT).remove(participant.Simploud__Participant__c);
             }
         }
 

@@ -5,9 +5,17 @@ public with sharing class SharePointTriggersHelper {
 
     public enum AccessType {
         EDIT,
+        REVIEW,
         READ,
         NOACCESS
     }
+
+    public static Map<AccessType, String> accessTypeToPermission = new Map<AccessType, String> {
+        AccessType.NOACCESS => 'none',
+        AccessType.READ => 'read',
+        AccessType.REVIEW => 'review',
+        AccessType.EDIT => 'write'
+    }; // accessType => permission
 
     @future(callout=true)
     public static void uploadFiles(String[] ids) {
@@ -76,12 +84,6 @@ public with sharing class SharePointTriggersHelper {
 
         User[] fileAdmins = [SELECT Id, Email FROM User WHERE File_Admin__c = True];
 
-        Map<AccessType, String> accessTypeToPermission = new Map<AccessType, String> {
-            AccessType.NOACCESS => 'none',
-            AccessType.READ => 'read',
-            AccessType.EDIT => 'write'
-        }; // accessType => permission
-
         if (docs == null) throw new InvalidQueryException('Document not found');
         if (configs == null) throw new MisconfigurationException('Compliance configuration not found');
 
@@ -115,7 +117,7 @@ public with sharing class SharePointTriggersHelper {
                 User[] users = [SELECT Id, Email FROM User WHERE Id IN :userIds];
 
                 String accessLabel = accessTypeToPermission.get(accessType);
-
+                
                 if (docId != null && users != null && users.size() > 0 && accessLabel != null)
                 SharePointPermissionsApiHandler.addPermissionToUsers(docId, users, accessLabel); // (2)
             }
@@ -165,6 +167,7 @@ public with sharing class SharePointTriggersHelper {
         // 2. add permissions for editors (list of user Ids from result.get(AccessType.EDIT))
         // 3. add permissions for readers (list of user Ids from result.get(AccessType.READ))
         Map<AccessType, Set<Id>> result = new Map<AccessType, Set<Id>> { // accessType => Simploud__Participant__c
+            AccessType.REVIEW => new Set<Id>(),
             AccessType.NOACCESS => new Set<Id>(),
             AccessType.READ => new Set<Id>(),
             AccessType.EDIT => new Set<Id>()
@@ -178,7 +181,7 @@ public with sharing class SharePointTriggersHelper {
 
         String buttonClickedValue;
 
-        if (document.Simploud__Button_Clicked__c != null && document.Simploud__Button_Clicked__c != '') {
+        if (String.isNotBlank(document.Simploud__Button_Clicked__c)) {
             try {
                 buttonClickedValue = document.Simploud__Button_Clicked__c.split(':')[2]; // e.g. 'Status' => 'Approve Review:Id1' -> 'Id1'
             }
@@ -418,7 +421,7 @@ public with sharing class SharePointTriggersHelper {
         }
 
         update parts;
-}
+    }
 
     public static void handleException(Exception e) {
         String errorMessage = 'Error occured in org: ' 

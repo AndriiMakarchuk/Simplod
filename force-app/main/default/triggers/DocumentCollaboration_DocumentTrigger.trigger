@@ -1,4 +1,4 @@
-trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__c (after insert, before update, after update, before delete) {
+trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__c (after insert, before update, after update, after delete) {
 
     DocumentCollaborationManager collabManager = new DocumentCollaborationManager();
 
@@ -21,137 +21,111 @@ trigger DocumentCollaboration_DocumentTrigger on Simploud__Controlled_Document__
     Id[] toClearViewonly = new Id[]{};
     String[] toDelete = new String[]{};
 
-    if (Trigger.isInsert) {
-        for (Simploud__Controlled_Document__c doc : trigger.new) {
-            if (doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                && doc.File_In_Cloud__c == false
-                && doc.Simploud__File_Exist__c == true) {
-                toUpload.add(String.valueOf(doc.Id));
+
+    if (Trigger.isBefore && Trigger.isUpdate) {
+        for (Simploud__Controlled_Document__c doc : Trigger.new) {
+            if (doc.Simploud__Checked_Out__c == true && Trigger.oldMap.get(doc.Id).Simploud__Checked_Out__c == false) {
+                doc.OneDrive_URL__c = '';
+                doc.OneDrive_Permission__c = '';
+                doc.OneDrive_Owner_Shared_Link__c = '';
             }
         }
     } 
 
-    if (Trigger.isInsert || Trigger.isUpdate) {
-        for (Simploud__Controlled_Document__c doc : trigger.new) {
-            if (
-                ((
-                    (Trigger.oldMap != null && Trigger.oldMap.get(doc.Id) != null)&&
-                    (
-                        Trigger.oldMap.get(doc.Id).Simploud__File_Exist__c == false 
-                        || 
-                        Trigger.oldMap.get(doc.Id).Simploud__Checked_Out__c == true 
-                    )
-                )
-                ||
-                (
-                    Trigger.oldMap == null || Trigger.oldMap.get(doc.Id) == null
-                ))
-                && doc.Simploud__Checked_Out__c == false
-                && doc.Simploud__File_Exist__c == true
-                && doc.File_In_Cloud__c == false
-                && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                &&!nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
-            ){
-                toUpload.add(String.valueOf(doc.Id));
-            }
-        }
-        
-        if (Trigger.isUpdate && Trigger.isAfter && Trigger.old != null) {
-            for (Simploud__Controlled_Document__c doc : trigger.new) {
-                for (String field : fieldsLeadsToUpdatePermissions) {
-                    if (doc.get(field) != trigger.oldMap.get(doc.Id).get(field)
-                        && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                        && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != ''
-                            && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
-                            || (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
-                        toUpdateAccess.add(doc.Id);
-                        break;
-                    }
-                }
-            }
-        }
+    if (Trigger.isAfter) {
 
-        if (Trigger.isUpdate && Trigger.isBefore && Trigger.old != null) {
-            for (Simploud__Controlled_Document__c doc : trigger.new) {
-                for (String field : fieldsLeadsToSaveMinorVersion) {
-                    if (doc.get(field) != trigger.oldMap.get(doc.Id).get(field)
-                        && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                        && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != '' 
-                             && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
-                            ||  (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
-                        toSaveMinorVersion.put(doc.Id, Trigger.oldMap.get(doc.Id).Simploud__Status__c);
-                        break;
-                    }
-                }
-
-                if (doc.Simploud__Status__c == trigger.oldMap.get(doc.Id).Simploud__Status__c && doc.Simploud__Button_Clicked__c != trigger.oldMap.get(doc.Id).Simploud__Button_Clicked__c
-                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                    && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != ''
-                            && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
-                            || (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
-                    toUpdateViewonly.add(doc.Id);
-                }
-
-                if (doc.Simploud__Status__c != trigger.oldMap.get(doc.Id).Simploud__Status__c
-                    && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                    && ((doc.OneDrive_URL__c != null && doc.OneDrive_URL__c != ''
-                            && doc.OneDrive_Permission__c != null && doc.OneDrive_Permission__c != '' && collabManager.collaborationToolName == 'SharePoint')
-                            || (doc.Google_Docs_Url__c != null && doc.Google_Docs_Url__c != '' && collabManager.collaborationToolName == 'Google'))) {
-                    toClearViewonly.add(doc.Id);
-                }
-
-                if (doc.Simploud__Checked_Out__c == true && trigger.oldMap.get(doc.Id).Simploud__Checked_Out__c == false) {
-                    doc.OneDrive_URL__c = '';
-                    doc.OneDrive_Permission__c = '';
-                    doc.OneDrive_Owner_Shared_Link__c = '';
-                }
-            }
-
+        if (Trigger.isInsert || Trigger.isUpdate) {
             for (Simploud__Controlled_Document__c doc : Trigger.new) {
-                if (nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
-                    && (doc.Simploud__Status__c != Trigger.oldMap.get(doc.Id).Simploud__Status__c)
-                    && (
-                        (!(doc.OneDrive_URL__c == null || doc.OneDrive_URL__c == '') && collabManager.collaborationToolName == 'SharePoint') 
-                        || 
-                        (!(doc.Google_Docs_Url__c == null || doc.Google_Docs_Url__c == '') && collabManager.collaborationToolName == 'Google')
+                if (
+                    ((
+                        (Trigger.oldMap != null && Trigger.oldMap.get(doc.Id) != null) &&
+                        (
+                            Trigger.oldMap.get(doc.Id).Simploud__File_Exist__c == false 
+                            || 
+                            Trigger.oldMap.get(doc.Id).Simploud__Checked_Out__c == true 
                         )
-                    ) {
-                     if( collabManager.collaborationToolName == 'SharePoint'){
+                    )
+                    ||
+                    (
+                        Trigger.oldMap == null || Trigger.oldMap.get(doc.Id) == null
+                    ))
+                    && doc.Simploud__Checked_Out__c == false
+                    && doc.Simploud__File_Exist__c == true
+                    && doc.Simploud__File_In_Cloud__c == false
+                    && doc.Simploud__Use_Document_Collaboration_Tool__c == 'Yes'
+                    && !nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
+                ) {
+                    toUpload.add(String.valueOf(doc.Id));
+                }
+            }
+        }
+
+        if (Trigger.isUpdate) {
+            for (Simploud__Controlled_Document__c doc : Trigger.new) {
+                if (collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc) 
+                    && doc.Simploud__Use_Document_Collaboration_Tool__c == 'Yes') 
+                {
+                    for (String field : fieldsLeadsToUpdatePermissions) {
+                        if (doc.get(field) != Trigger.oldMap.get(doc.Id).get(field)) {
+                            toUpdateAccess.add(doc.Id);
+                            break;
+                        }
+                    }
+
+                    for (String field : fieldsLeadsToSaveMinorVersion) {
+                        if (doc.get(field) != Trigger.oldMap.get(doc.Id).get(field)) {
+                            toSaveMinorVersion.put(doc.Id, Trigger.oldMap.get(doc.Id).Simploud__Status__c);
+                            break;
+                        }
+                    }
+
+                    if (doc.Simploud__Status__c == trigger.oldMap.get(doc.Id).Simploud__Status__c 
+                        && doc.Simploud__Button_Clicked__c != trigger.oldMap.get(doc.Id).Simploud__Button_Clicked__c) {
+                            toUpdateViewonly.add(doc.Id);
+                    }
+
+                    if (doc.Simploud__Status__c != trigger.oldMap.get(doc.Id).Simploud__Status__c) {
+                        toClearViewonly.add(doc.Id);
+                    }
+
+
+                    if (nonCollaborativeStatuses.contains(doc.Simploud__Status__c)
+                        && (doc.Simploud__Status__c != Trigger.oldMap.get(doc.Id).Simploud__Status__c)) 
+                    {
+                        if (collabManager.collaborationToolName == 'SharePoint') {
+                            toDelete.add(doc.Id);
+                        } else {
+                            toDelete.add(doc.Google_Docs_URL__c) ;
+                        }
+                        
+                    if (toUpload.indexOf(String.valueOf(doc.Id)) > -1) toUpload.remove(toUpload.indexOf(String.valueOf(doc.Id)));
+                        toUpdateAccess.remove(doc.Id);
+                        toSaveMinorVersion.remove(doc.Id);
+                        if (toUpdateViewonly.indexOf(doc.Id) > -1) toUpdateViewonly.remove(toUpdateViewonly.indexOf(doc.Id));
+                        if (toClearViewonly.indexOf(doc.Id) > -1) toClearViewonly.remove(toClearViewonly.indexOf(doc.Id));
+                    }
+                }
+            }
+        }
+
+        if (Trigger.isDelete) {
+            for (Simploud__Controlled_Document__c doc : Trigger.old) {
+                if (collabManager.isCollaborationFieldsGoogleOrSharepointSet(doc)
+                    && doc.Simploud__Use_Document_Collaboration_Tool__c == 'Yes'
+                    ) 
+                {
+                    if (collabManager.collaborationToolName == 'SharePoint') {
                         toDelete.add(doc.Id);
-                     }else{
+                    } else {
                         toDelete.add(doc.Google_Docs_URL__c) ;
-                     }
-                    
+                    }
+    
                     if (toUpload.indexOf(String.valueOf(doc.Id)) > -1) toUpload.remove(toUpload.indexOf(String.valueOf(doc.Id)));
                     toUpdateAccess.remove(doc.Id);
                     toSaveMinorVersion.remove(doc.Id);
                     if (toUpdateViewonly.indexOf(doc.Id) > -1) toUpdateViewonly.remove(toUpdateViewonly.indexOf(doc.Id));
                     if (toClearViewonly.indexOf(doc.Id) > -1) toClearViewonly.remove(toClearViewonly.indexOf(doc.Id));
                 }
-            }
-        }
-    }
-
-    else if (trigger.isDelete) {
-        for (Simploud__Controlled_Document__c doc : trigger.old) {
-            if ((
-                (!(doc.OneDrive_URL__c == null || doc.OneDrive_URL__c == '') && collabManager.collaborationToolName == 'SharePoint') 
-                || 
-                (!(doc.Google_Docs_Url__c == null || doc.Google_Docs_Url__c == '') && collabManager.collaborationToolName == 'Google')
-                )
-                && doc.Use_Document_Collaboration_Tool__c == 'Yes'
-                ) {
-                    if( collabManager.collaborationToolName == 'SharePoint'){
-                        toDelete.add(doc.Id);
-                     }else{
-                        toDelete.add(doc.Google_Docs_URL__c) ;
-                     }
-
-                if (toUpload.indexOf(String.valueOf(doc.Id)) > -1) toUpload.remove(toUpload.indexOf(String.valueOf(doc.Id)));
-                toUpdateAccess.remove(doc.Id);
-                toSaveMinorVersion.remove(doc.Id);
-                if (toUpdateViewonly.indexOf(doc.Id) > -1) toUpdateViewonly.remove(toUpdateViewonly.indexOf(doc.Id));
-                if (toClearViewonly.indexOf(doc.Id) > -1) toClearViewonly.remove(toClearViewonly.indexOf(doc.Id));
             }
         }
     }

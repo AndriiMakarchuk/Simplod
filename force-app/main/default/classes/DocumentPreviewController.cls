@@ -199,15 +199,6 @@ global with sharing class DocumentPreviewController {
                 checkStatus.cancelCheck = false;                    
                 checkStatus.myCheckOut = false;
             }
-            else if (fileExt == 'pdf')
-            {
-                checkStatus.checkOut = false; 
-                checkStatus.checkIn = true; 
-                checkStatus.checkOutBy = '';
-                checkStatus.checkOutOn = '';
-                checkStatus.cancelCheck = false;                    
-                checkStatus.myCheckOut = false;
-            }
             else
             {
                 if (doc.Checked_Out__c)

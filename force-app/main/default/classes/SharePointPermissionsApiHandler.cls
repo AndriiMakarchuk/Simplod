@@ -10,7 +10,11 @@ public class SharePointPermissionsApiHandler {
     public Boolean requireSignIn { get; set; }
     public boolean sendInvitation { get; set; }
     public String[] roles { get; set; }
-
+    public String type = 'review';
+    public Boolean sendNotification = true;
+    public Boolean retainInheritedPermissions = false;
+    public String scope = 'anonymous';
+    
     PermissionBodyWrapper(
       Boolean requireSignIn,
       boolean sendInvitation,
@@ -106,42 +110,17 @@ public class SharePointPermissionsApiHandler {
     // if (system.isFuture() || system.isBatch()) {
     //   return;
     // }
+    if (permission == 'review') {
+      addReviewPermissionToUsers(recordId, users);
+      return;
+    }
 
-    Simploud__Controlled_Document__c controlledDocument = [
-      SELECT Id, OneDrive_URL__c, OneDrive_Owner_Shared_Link__c, OwnerId
-      FROM Simploud__Controlled_Document__c
-      WHERE Id = :recordId
-    ];
+    Simploud__Controlled_Document__c controlledDocument = getControlledDocumentsByIds(new List<Id>{recordId}).get(0);
 
     Map<Id, User> usersMap = new Map<Id, User>(users);
-    List<Simploud__Document_Participant__c> participants = [
-      SELECT Id, OneDrive_Shared_Link__c
-      FROM Simploud__Document_Participant__c
-      WHERE
-        Simploud__Participant__c IN :usersMap.keySet()
-        AND Simploud__Document__c = :recordId
-    ];
+    List<Simploud__Document_Participant__c> participants = getDocumentParticipantsByParicipantAndDocumentsIds(usersMap.keySet(), new List<Id>{recordId});
 
-    List<EmailWrapper> emailWrapperList = new List<EmailWrapper>();
-    for (User u : users) {
-      if (u.email == null)
-        continue;
-      if (u.email == '')
-        continue;
-      if (u.email.contains('.invalid'))
-        continue;
-      if (u.email == 'admin@simploud.com') {
-        Simploud__SimploudOrgSettings__c settings = Simploud__SimploudOrgSettings__c.getOrgDefaults();
-        if (settings != null && settings.Support_Email_Replacement__c != null && settings.Support_Email_Replacement__c != '') { 
-          u.email = settings.Support_Email_Replacement__c;
-        }
-        else {
-          continue;
-        }
-      }
-
-      emailWrapperList.add(new EmailWrapper(u.Email));
-    }
+    List<EmailWrapper> emailWrapperList = getEmailsFromUsers(users);
 
     PermissionBodyWrapper bodyWrap = new PermissionBodyWrapper();
     bodyWrap.setRequireSignIn(true);
@@ -180,6 +159,46 @@ public class SharePointPermissionsApiHandler {
     }
   }
 
+  public static void addReviewPermissionToUsers(Id recordId, List<User> users) {
+    Simploud__Controlled_Document__c controlledDocument = getControlledDocumentsByIds(new List<Id>{recordId}).get(0);
+
+    Map<Id, User> usersMap = new Map<Id, User>(users);
+    List<Simploud__Document_Participant__c> participants = getDocumentParticipantsByParicipantAndDocumentsIds(usersMap.keySet(), new List<Id>{recordId});
+
+    List<EmailWrapper> emailWrapperList = getEmailsFromUsers(users);
+
+    PermissionBodyWrapper bodyWrap = new PermissionBodyWrapper();
+    bodyWrap.setRecipients(emailWrapperList);
+
+    String body = bodyWrap.toString();
+
+    String itemId = SharePointApiHandler.getFileId(
+      controlledDocument.OneDrive_URL__c
+    );
+
+    string endpointUrl = 'callout:SharePoint/me/drive/items/{item-id}/createLink';
+
+    if (itemId == null) return;
+
+    endpointUrl = endpointUrl.replace('{item-id}', itemId);
+
+    Map<String, String> headers = new Map<String, String>();
+    headers.put('Content-Type', 'application/json');
+    headers.put('Accept', 'application/json, text/plain');
+
+    HttpResponse res = SharePointApiHandler.sendRequest(
+      'POST',
+      endpointUrl,
+      headers,
+      body,
+      null
+    );
+
+    if (res.getStatusCode() != 201) {
+      throw new CannotAddPermissionException(res.getBody());
+    }
+  }
+
   /**
    * Makes a request to the SharePoint API to add permissions to a document for the record owner and all users with the File Admin field checked
    * @param documentUrl `string` - the url of the document
@@ -187,43 +206,16 @@ public class SharePointPermissionsApiHandler {
    * @author Anastasiia Stetsenko
    */
   public static String addPermissionToOwner(String documentUrl, Id documentId) {
-    Simploud__Controlled_Document__c controlledDocument = [
-      SELECT Id, OneDrive_Owner_Shared_Link__c, OwnerId, (SELECT Simploud__Participant__c FROM Simploud__Document_Participants__r)
-      FROM Simploud__Controlled_Document__c
-      WHERE Id = :documentId
-    ];
+    Simploud__Controlled_Document__c controlledDocument = getControlledDocumentsByIds(new List<Id>{documentId}).get(0);
 
     Id[] participantsIds = new List<Id>();
     for (Simploud__Document_Participant__c part : controlledDocument.Simploud__Document_Participants__r) {
       participantsIds.add(part.Simploud__Participant__c);
     }
 
-    User[] users = [
-      SELECT Email, Profile.Name
-      FROM User
-      WHERE Id = :controlledDocument.OwnerId OR File_Admin__c = TRUE
-    ];
+    List<User> users = getUsersByIdsAndFileAdmins(new List<Id>{controlledDocument.OwnerId});
 
-    List<EmailWrapper> emailWrapperList = new List<EmailWrapper>();
-    for (User u : users) {
-      if (u.email == null)
-        continue;
-      if (u.email == '')
-        continue;
-      if (u.email.contains('.invalid'))
-        continue;
-      if (u.email == 'admin@simploud.com') {
-        Simploud__SimploudOrgSettings__c settings = Simploud__SimploudOrgSettings__c.getOrgDefaults();
-        if (settings != null && settings.Support_Email_Replacement__c != null && settings.Support_Email_Replacement__c != '') { 
-          u.email = settings.Support_Email_Replacement__c;
-        }
-        else {
-          continue;
-        }
-      }
-
-      emailWrapperList.add(new EmailWrapper(u.Email));
-    }
+    List<EmailWrapper> emailWrapperList = getEmailsFromUsers(users);
 
     PermissionBodyWrapper bodyWrap = new PermissionBodyWrapper();
     bodyWrap.setRequireSignIn(true);
@@ -259,11 +251,7 @@ public class SharePointPermissionsApiHandler {
 
       // viewPermissions(documentUrl, documentId);
 
-      User owner = [
-        SELECT Id, Email
-        FROM User
-        WHERE Id = :controlledDocument.OwnerId
-      ];
+      User owner = getUsersByIds(new List<Id>{controlledDocument.OwnerId}).get(0);
       String ownerEmail = owner.Email;
       integer findingIndex = 0;
       boolean goFurther = true;
@@ -290,9 +278,7 @@ public class SharePointPermissionsApiHandler {
 
       if ( // in this case owner in an external user
         found == true &&
-        wrap.value[findingIndex - 1] != null &&
-        wrap.value[findingIndex - 1].link != null &&
-        wrap.value[findingIndex - 1].link.webUrl != null
+        wrap.value[findingIndex - 1]?.link?.webUrl != null
       ) {
         controlledDocument.OneDrive_Owner_Shared_Link__c = wrap.value[
             findingIndex - 1
@@ -304,32 +290,9 @@ public class SharePointPermissionsApiHandler {
         );
       }
 
-      User[] participantsUsers = [
-        SELECT Id, Email
-        FROM User
-        WHERE Id IN :participantsIds
-      ];
+      List<User> participantsUsers = getUsersByIds(participantsIds);
 
-      emailWrapperList = new List<EmailWrapper>();
-      for (User u : participantsUsers) {
-        if (u.email == null)
-          continue;
-        if (u.email == '')
-          continue;
-        if (u.email.contains('.invalid'))
-          continue;
-        if (u.email == 'admin@simploud.com') {
-          Simploud__SimploudOrgSettings__c settings = Simploud__SimploudOrgSettings__c.getOrgDefaults();
-          if (settings != null && settings.Support_Email_Replacement__c != null && settings.Support_Email_Replacement__c != '') { 
-            u.email = settings.Support_Email_Replacement__c;
-          }
-          else {
-            continue;
-          }
-        }
-
-        emailWrapperList.add(new EmailWrapper(u.Email));
-      }
+      emailWrapperList = getEmailsFromUsers(participantsUsers);
 
       bodyWrap = new PermissionBodyWrapper();
       bodyWrap.setRequireSignIn(true);
@@ -373,18 +336,11 @@ public class SharePointPermissionsApiHandler {
    */
   public static void viewPermissions(String[] recordIds) {
     Map<Id, List<PermissionUser>> parsingMap = new Map<Id, List<PermissionUser>>();
-    Simploud__Controlled_Document__c[] controlledDocuments = [
-      SELECT Id, OneDrive_URL__c, OneDrive_Owner_Shared_Link__c, OwnerId
-      FROM Simploud__Controlled_Document__c
-      WHERE Id IN :recordIds
-      WITH SECURITY_ENFORCED
-    ];
-    Id[] ownerIds = new List<Id>{};
+    List<Simploud__Controlled_Document__c> controlledDocuments = getControlledDocumentsByIds(recordIds);
+    List<Id> ownerIds = new List<Id>{};
 
     Simploud__Controlled_Document__c[] toUpdate = new List<Simploud__Controlled_Document__c>();
-    for (
-      Simploud__Controlled_Document__c controlledDocument : controlledDocuments
-    ) {
+    for (Simploud__Controlled_Document__c controlledDocument : controlledDocuments) {
       ownerIds.add(controlledDocument.OwnerId);
 
       String itemId = SharePointApiHandler.getFileId(
@@ -404,7 +360,6 @@ public class SharePointPermissionsApiHandler {
         null,
         null
       );
-
       if (res.getStatusCode() == 200) {
         List<PermissionUser> parsingList = new List<PermissionUser>();
 
@@ -416,7 +371,7 @@ public class SharePointPermissionsApiHandler {
         );
         for (SharePointValueWrapper unit : wrap.value) {
           if (!unit.roles.contains('owner') && unit.roles.size() != 0) {
-            if (!String.isBlank(controlledDocument.OneDrive_Permission__c))
+            if (String.isNotBlank(controlledDocument.OneDrive_Permission__c))
               controlledDocument.OneDrive_Permission__c += '\n';
 
             controlledDocument.OneDrive_Permission__c +=
@@ -456,15 +411,7 @@ public class SharePointPermissionsApiHandler {
     List<Simploud__Controlled_Document__c> toUpdateDocs = new List<Simploud__Controlled_Document__c>();
     List<Simploud__Document_Participant__c> toUpdatePart = new List<Simploud__Document_Participant__c>();
 
-    Simploud__Document_Participant__c[] participants = [
-      SELECT
-        Id,
-        Simploud__Participant__c,
-        Simploud__Document__c,
-        OneDrive_Shared_Link__c
-      FROM Simploud__Document_Participant__c
-      WHERE Simploud__Document__c IN :parsingMap.keySet()
-    ];
+    List<Simploud__Document_Participant__c> participants = getDocumentParticipantsByDocumentsIds(parsingMap.keySet());
 
     Id[] userIds = new List<Id>();
     for (Simploud__Document_Participant__c part : participants) {
@@ -473,17 +420,13 @@ public class SharePointPermissionsApiHandler {
 
     userIds.addAll(ownerIds);
 
-    List<User> users = new List<User>(
-      [SELECT Email FROM User WHERE Id IN :userIds]
-    );
+    List<User> users = getUsersByIds(userIds);
     Map<String, Id> userEmails = new Map<String, Id>();
     for (User user : users) {
       userEmails.put(user.Email, user.Id);
     }
 
-    for (
-      Simploud__Controlled_Document__c controlledDocument : controlledDocuments
-    ) {
+    for (Simploud__Controlled_Document__c controlledDocument : controlledDocuments) {
       String Owner = null;
       Map<Id, Simploud__Document_Participant__c> participantsOfDoc = new Map<Id, Simploud__Document_Participant__c>();
       for (Simploud__Document_Participant__c part : participants) {
@@ -500,8 +443,7 @@ public class SharePointPermissionsApiHandler {
           for (String em : pu.emails) {
             em = em.toLowerCase();
             if (participantsOfDoc.keySet().contains(userEmails.get(em))) {
-              participantsOfDoc.get(userEmails.get(em))
-                .OneDrive_Shared_Link__c = link;
+              participantsOfDoc.get(userEmails.get(em)).OneDrive_Shared_Link__c = link;
               toUpdatePart.add(participantsOfDoc.get(userEmails.get(em)));
             }
             if (controlledDocument.OwnerId == userEmails.get(em)) {
@@ -526,11 +468,7 @@ public class SharePointPermissionsApiHandler {
   }
 
   public static void viewPermissions(String documentUrl, Id recordId) {
-    Simploud__Controlled_Document__c controlledDocument = [
-      SELECT Id
-      FROM Simploud__Controlled_Document__c
-      WHERE Id = :recordId
-    ];
+    Simploud__Controlled_Document__c controlledDocument = getControlledDocumentsByIds(new List<Id>{recordId}).get(0);
 
     String itemId = SharePointApiHandler.getFileId(documentUrl);
 
@@ -577,29 +515,13 @@ public class SharePointPermissionsApiHandler {
    * @author Anastasiia Stetsenko
    */
   public static void deletePermissions(String[] recordIds) {
-    Simploud__Controlled_Document__c[] controlledDocuments = [
-      SELECT
-        Id,
-        OneDrive_URL__c,
-        OneDrive_Permission__c,
-        OneDrive_Owner_Shared_Link__c
-      FROM Simploud__Controlled_Document__c
-      WHERE Id IN :recordIds
-    ];
-    for (
-      Simploud__Controlled_Document__c controlledDocument : controlledDocuments
-    ) {
-      List<String> permissions = controlledDocument.OneDrive_Permission__c.split(
-        ';'
-      );
+    List<Simploud__Controlled_Document__c> controlledDocuments = getControlledDocumentsByIds(recordIds);
+    for (Simploud__Controlled_Document__c controlledDocument : controlledDocuments) {
+      List<String> permissions = controlledDocument.OneDrive_Permission__c.split(';');
       if (permissions.size()==0) continue;
       for (String permission : permissions) {
-        if (String.isBlank(permission))
-          continue;
-        deletePermissionsAPI(
-          controlledDocument,
-          permission.substringAfter('id: ')
-        );
+        if (String.isBlank(permission)) continue;
+        deletePermissionsAPI(controlledDocument, permission.substringAfter('id: '));
       }
     }
   }
@@ -644,5 +566,69 @@ public class SharePointPermissionsApiHandler {
       .replace('download.aspx', 'Doc.aspx')
       .replace('uniqueid=', 'sourcedoc={')
       .replace('&', '}&');
+  }
+
+  private static List<EmailWrapper> getEmailsFromUsers(List<User> users) {
+    List<EmailWrapper> emailWrapperList = new List<EmailWrapper>();
+    for (User u : users) {
+      if (String.isBlank(u.email))
+        continue;
+      if (u.email.contains('.invalid'))
+        continue;
+      if (u.email == 'admin@simploud.com') {
+        Simploud__SimploudOrgSettings__c settings = Simploud__SimploudOrgSettings__c.getOrgDefaults();
+        if (String.isNotBlank(settings?.Support_Email_Replacement__c)) { 
+          u.email = settings.Support_Email_Replacement__c;
+        } else {
+          continue;
+        }
+      }
+
+      emailWrapperList.add(new EmailWrapper(u.Email));
+    }
+
+    return emailWrapperList;
+  }
+
+  private static List<Simploud__Controlled_Document__c> getControlledDocumentsByIds(List<Id> documentIds) {
+    return [
+      SELECT Id, OneDrive_Owner_Shared_Link__c, OneDrive_URL__c, OneDrive_Permission__c, OwnerId,
+      (SELECT Simploud__Participant__c FROM Simploud__Document_Participants__r)
+      FROM Simploud__Controlled_Document__c
+      WHERE Id IN :documentIds
+    ];
+  }
+
+  private static List<Simploud__Document_Participant__c> getDocumentParticipantsByParicipantAndDocumentsIds(Set<Id> userIds, List<Id> documentIds) {
+    return [
+      SELECT Id, OneDrive_Shared_Link__c
+      FROM Simploud__Document_Participant__c
+      WHERE Simploud__Participant__c IN :userIds AND Simploud__Document__c IN :documentIds
+    ];
+  }
+
+  private static List<Simploud__Document_Participant__c> getDocumentParticipantsByDocumentsIds(Set<Id> documentIds){
+    return [
+      SELECT Id, Simploud__Participant__c,
+        Simploud__Document__c, OneDrive_Shared_Link__c
+      FROM Simploud__Document_Participant__c
+      WHERE Simploud__Document__c IN :documentIds
+    ];
+  }
+
+  private static List<User> getUsersByIds(List<Id> userIds) {
+    return [
+      SELECT Id, Email
+      FROM User
+      WHERE Id IN :userIds
+    ];
+  }
+
+  private static List<User> getUsersByIdsAndFileAdmins(List<Id> userIds) { 
+    return [
+      SELECT Email, Profile.Name
+      FROM User
+      WHERE Id IN :userIds OR File_Admin__c = TRUE
+    ];
   }
 }
