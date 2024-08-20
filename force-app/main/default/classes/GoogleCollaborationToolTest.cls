@@ -84,9 +84,9 @@ public with sharing class GoogleCollaborationToolTest {
         manager.deleteDocuments(new List<String> { cd.Google_Docs_URL__c });
         Test.stopTest();
 
-        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Google_Docs_URL__c, Simploud__File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :cd.Id];
+        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Google_Docs_URL__c, File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :cd.Id];
         system.assertEquals(null, updatedDoc.Google_Docs_URL__c);
-        system.assertEquals(false, updatedDoc.Simploud__File_In_Cloud__c);
+        system.assertEquals(false, updatedDoc.File_In_Cloud__c);
 
         delete updatedDoc;
     }
@@ -115,9 +115,9 @@ public with sharing class GoogleCollaborationToolTest {
         manager.uploadFiles(recordIds);
         Test.stopTest();
 
-        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Google_Docs_URL__c, Simploud__File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :cd.Id];
+        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Google_Docs_URL__c, File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :cd.Id];
         system.assertEquals('https://docs.google.com/document/d/1', updatedDoc.Google_Docs_URL__c);
-        system.assertEquals(true, updatedDoc.Simploud__File_In_Cloud__c);
+        system.assertEquals(true, updatedDoc.File_In_Cloud__c);
 
         delete updatedDoc;
     }
@@ -130,7 +130,7 @@ public with sharing class GoogleCollaborationToolTest {
         cd.Name = 'test';
         cd.Use_Document_Collaboration_Tool__c = 'Yes';
         cd.Google_Docs_URL__c = 'https://docs.google.com/document/d/3';
-        cd.Simploud__File_In_Cloud__c = true;
+        cd.File_In_Cloud__c = true;
         insert cd;
 
         ContentVersion cv = SharePointApiHandler.createContentVersion('test.docx', EncodingUtil.base64Decode(filecontent));
@@ -148,9 +148,9 @@ public with sharing class GoogleCollaborationToolTest {
         manager.uploadFiles(recordIds);
         Test.stopTest();
 
-        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Google_Docs_URL__c, Simploud__File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :cd.Id];
+        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Google_Docs_URL__c, File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :cd.Id];
         system.assertEquals('https://docs.google.com/document/d/3', updatedDoc.Google_Docs_URL__c);
-        system.assertEquals(true, updatedDoc.Simploud__File_In_Cloud__c);
+        system.assertEquals(true, updatedDoc.File_In_Cloud__c);
 
         delete updatedDoc;
     }
@@ -279,9 +279,9 @@ public with sharing class GoogleCollaborationToolTest {
         manager.markFilesUploaded(new Id[] { doc.Id });
         Test.stopTest();
 
-        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, Simploud__File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :doc.Id];
+        Simploud__Controlled_Document__c updatedDoc = [SELECT Id, File_In_Cloud__c FROM Simploud__Controlled_Document__c WHERE Id = :doc.Id];
 
-        system.assertEquals(false, updatedDoc.Simploud__File_In_Cloud__c);
+        system.assertEquals(false, updatedDoc.File_In_Cloud__c);
     }
 
     /* GoogleEditorController */
