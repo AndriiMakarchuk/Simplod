@@ -46,11 +46,13 @@ public with sharing class GoogleDocsApiHandler {
     public static void uploadFile(Id[] recordIds) {
         if (recordIds == null) throw new GoogleDocsApiException('One or more parameters are null');
         if (recordIds.size() == 0) return;
+
         Map<Id, Simploud__Controlled_Document__c> controlledDocuments = new Map<Id, Simploud__Controlled_Document__c>(
             [
                 SELECT Id, (SELECT Id, ContentDocumentId FROM ContentDocumentLinks), Google_Docs_URL__c, OwnerId, Uploaded_File_Extension__c
                 FROM Simploud__Controlled_Document__c
-                WHERE Id IN :recordIds AND Simploud__Use_Document_Collaboration_Tool__c = 'Yes'
+                WHERE Id IN :recordIds 
+                AND Use_Document_Collaboration_Tool__c = 'Yes'
             ]
         );
 
@@ -81,12 +83,6 @@ public with sharing class GoogleDocsApiHandler {
                 AND ContentDocumentId IN :contentDocumentIds.keySet()
             ]
         );
-        // Map<ContentVersion, Simploud__Controlled_Document__c> versions = new Map<ContentVersion, Simploud__Controlled_Document__c>(); // ContentVersion -> Controlled Document
-        // for (ContentVersion cv : [
-        //                             ]) {
-        //     if (versions.values().contains(contentDocuments.get(cv.ContentDocumentId))) continue;
-        //     versions.put(cv, contentDocuments.get(cv.ContentDocumentId));
-        // }
 
         List<Simploud__Controlled_Document__c> toUpdate = new List<Simploud__Controlled_Document__c>();
         for (ContentDocument attach : contentDocuments.keySet()) {
@@ -189,7 +185,7 @@ public with sharing class GoogleDocsApiHandler {
         request.setBody(body);
 
         HttpResponse response = http.send(request);
-		System.debug(response.getBody());
+
         if (response.getStatusCode() != 200) {
             throw new GoogleDocsApiException('Google Docs API returned an error: ' + response.getStatusCode() + '\n\n' + response.getBody());
         }
@@ -308,7 +304,7 @@ public with sharing class GoogleDocsApiHandler {
 
         for (Simploud__Controlled_Document__c doc : affectedDocs) {
             doc.Google_Docs_URL__c = null;
-            doc.Simploud__File_In_Cloud__c = false;
+            doc.File_In_Cloud__c = false;
         }
 
         if (affectedDocs.size() > 0) {
@@ -337,7 +333,7 @@ public with sharing class GoogleDocsApiHandler {
         request.setMethod('DELETE');
 
         HttpResponse response = http.send(request);
-        System.debug(response.getBody());
+
         if (response.getStatusCode() != 204) {
             throw new GoogleDocsApiException('Google Docs API returned an error: ' + response.getStatusCode() + '\n\n' + response.getBody());
         }
